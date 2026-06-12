@@ -1,0 +1,223 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background: black;
+    overflow-x: hidden;
+}
+
+.Welcome {
+    min-height: 100vh;
+    background: black;
+    padding-top: 40px;
+}
+
+.heroBox {
+    position: relative;
+
+    width: 900px;
+    height: 350px;
+
+    margin: 0 auto;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.heroBox h1 {
+    font-size: 7rem;
+    font-weight: 700;
+    text-align: center;
+}
+
+.welcome {
+    color: white;
+}
+
+.to {
+    color: orange;
+}
+
+.instacard {
+    background: linear-gradient(
+        90deg,
+        red,
+        purple,
+        blue
+    );
+
+    background-clip: text;
+    -webkit-background-clip: text;
+    color: transparent;
+    -webkit-text-fill-color: transparent;
+}
+
+
+.tagline {
+    margin-top: 20px;
+
+    text-align: center;
+
+    color: whitesmoke;
+
+    font-size: 2.5rem;
+
+    font-weight: 100;
+}
+
+.btnContainer {
+    position: relative;
+
+    width: fit-content;
+
+    margin: 100px auto;
+}
+
+.startBtn {
+    font-size: 1.6rem;
+
+    padding: 14px 28px;
+
+    border: none;
+
+    border-radius: 12px;
+
+    font-family: "Rubik Glitch", system-ui;
+
+    color: white;
+
+    cursor: pointer;
+
+    background: linear-gradient(
+        135deg,
+        #ff4d4d,
+        #ff0000,
+        #b30000
+    );
+
+    box-shadow:
+        0 4px 15px rgba(255, 0, 0, 0.5),
+        inset 0 2px 4px rgba(255,255,255,0.4);
+
+    position: relative;
+
+    overflow: hidden;
+
+    transition: all .3s ease;
+    bottom: 50px;
+}
+
+.startBtn::before {
+    content: "";
+
+    position: absolute;
+
+    top: 0;
+
+    left: -120%;
+
+    width: 60%;
+
+    height: 100%;
+
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255,255,255,.8),
+        transparent
+    );
+
+    transform: skewX(-25deg);
+
+    transition: .6s;
+}
+
+.startBtn:hover::before {
+    left: 150%;
+}
+
+.startBtn:hover {
+    transform: translateY(-3px);
+
+    box-shadow:
+        0 0 20px red,
+        0 0 50px red,
+        0 0 80px rgba(255,0,0,.5);
+}
+
+.icon {
+    position: fixed;
+
+    width: 120px;
+
+    opacity: 0;
+
+    pointer-events: none;
+
+    transition:
+        opacity .5s ease,
+        transform .8s ease;
+
+    filter:
+        drop-shadow(0 0 15px rgba(255,255,255,.4));
+
+    z-index: 10;
+}
+
+.insta {
+    top: 70px;
+    left: 80px;
+}
+
+.facebook {
+    top: 420px;
+    left: 120px;
+}
+
+.linkedin {
+    top: 120px;
+    right: 120px;
+}
+
+.discord {
+    top: 450px;
+    right: 180px;
+}
+
+
+.startBtn:hover ~ .icon {
+    opacity: 1;
+}
+
+.startBtn:hover ~ .insta {
+    transform:
+        translate(-20px,-30px)
+        rotate(-20deg)
+        scale(1.6);
+}
+
+.startBtn:hover ~ .facebook {
+    transform:
+        translate(40px,-50px)
+        rotate(15deg)
+        scale(1.5);
+}
+
+.startBtn:hover ~ .linkedin {
+    transform:
+        translate(-30px,40px)
+        rotate(-15deg)
+        scale(1.7);
+}
+
+.startBtn:hover ~ .discord {
+    transform:
+        translate(50px,-40px)
+        rotate(20deg)
+        scale(1.7);
+}
+
