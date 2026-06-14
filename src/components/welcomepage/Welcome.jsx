@@ -5,7 +5,11 @@ import facebook from '../../assets/facebook.png';
 import linkedin from '../../assets/linkedin.png';
 import discord from '../../assets/discord.png';
 import github from '../../assets/github.png';
+import { useNavigate } from "react-router-dom";
 const Welcome = () => {
+  
+  const navigate = useNavigate();
+
   return (
     <div className={styles.Welcome}>
 
@@ -23,7 +27,7 @@ const Welcome = () => {
   </p>
 
   <div className={styles.btnContainer}>
-    <button className={styles.startBtn}>
+    <button onClick={() => navigate("/builder") } className={styles.startBtn}>
       get started ?
     </button>
 

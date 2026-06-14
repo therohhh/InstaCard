@@ -1,0 +1,35 @@
+.builder {
+  min-height: 100vh;
+  display: flex;
+  font-family: 'DM Mono', monospace;
+}
+
+.formPanel {
+  width: 38%;
+  padding: 3rem 2.5rem;
+  background: #0F0F11;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid #1e1e22;
+}
+
+.previewPanel {
+  width: 62%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #F7F5F0;
+  position: relative;
+  overflow: hidden;
+}
+
+/* subtle dot-grid texture on preview side */
+.previewPanel::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(#d4d0c8 1px, transparent 1px);
+  background-size: 24px 24px;
+  opacity: 0.5;
+  pointer-events: none;
+}

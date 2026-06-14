@@ -1,0 +1,107 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=Instrument+Serif:ital@0;1&display=swap');
+
+.card {
+  position: relative;
+  z-index: 1;
+  width: 360px;
+  min-height: 520px;
+  background: #0F0F11;
+  border-radius: 16px;
+  padding: 2.5rem 2rem 2rem;
+  display: flex;
+  flex-direction: column;
+  box-shadow:
+    0 0 0 1px rgba(124, 92, 252, 0.15),
+    0 32px 64px rgba(15, 15, 17, 0.22),
+    0 8px 24px rgba(15, 15, 17, 0.14);
+}
+
+.tag {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.6rem;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #7C5CFC;
+  margin-bottom: 2.5rem;
+}
+
+.avatar {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: #7C5CFC;
+  color: #fff;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-family: 'Instrument Serif', serif;
+  font-size: 1.4rem;
+  font-style: italic;
+  margin-bottom: 1.5rem;
+}
+
+.name {
+  font-family: 'Instrument Serif', serif;
+  font-style: italic;
+  font-size: 2.4rem;
+  font-weight: 400;
+  color: #F7F5F0;
+  line-height: 1.1;
+  margin: 0 0 0.5rem;
+}
+
+.namePlaceholder {
+  color: #2e2e34;
+}
+
+.role {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.7rem;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #C8FF57;
+  margin: 0 0 2rem;
+}
+
+.rolePlaceholder {
+  color: #2a2a2f;
+}
+
+.divider {
+  width: 100%;
+  height: 1px;
+  background: #1e1e22;
+  margin-bottom: 1.5rem;
+}
+
+.bio {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.8rem;
+  font-weight: 300;
+  line-height: 1.75;
+  color: #888;
+  margin: 0;
+  flex: 1;
+}
+
+.bioPlaceholder {
+  color: #2a2a2f;
+  font-style: italic;
+}
+
+.cardFooter {
+  margin-top: 2.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #7C5CFC;
+  opacity: 0.4;
+}

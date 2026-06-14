@@ -1,13 +1,24 @@
-import React from 'react'
-import Welcome from './components/welcomepage/Welcome'
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+
+import Welcome from "./components/welcomepage/Welcome";
+import CardBuilder from "./pages/cardBuilder/CardBuilder";
 import CursorGlow from "./components/cursor/CursorGlow";
-const App = () => {
+
+function App() {
   return (
-    <div>
-    <CursorGlow />
-    < Welcome/>
-    </div>
-  )
+    <BrowserRouter>
+      <CursorGlow />
+
+      <Routes>
+        <Route path="/" element={<Welcome />} />
+
+        <Route
+          path="/builder"
+          element={<CardBuilder />}
+        />
+      </Routes>
+    </BrowserRouter>
+  );
 }
 
-export default App
+export default App;

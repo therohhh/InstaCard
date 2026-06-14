@@ -1,0 +1,104 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&display=swap');
+
+.formContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 2.5rem;
+  height: 100%;
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.eyebrow {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.65rem;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #7C5CFC;
+}
+
+.header h1 {
+  /* font-family: 'DM Mono', monospace; */
+  font-size: 1.55rem;
+  font-weight: 400;
+  color: #F7F5F0;
+  line-height: 1.2;
+  margin: 0;
+}
+
+.header h1 em {
+  font-style: italic;
+  color: #C8FF57;
+}
+
+.divider {
+  width: 302px;
+  height: 1px;
+  background: #2cd60a;
+  margin-top: 0.5rem;
+}
+
+.fields {
+  display: flex;
+  flex-direction: column;
+  gap: 1.8rem;
+}
+
+.inputGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.inputGroup label {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.65rem;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #666;
+}
+
+.inputGroup input,
+.inputGroup textarea {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.9rem;
+  font-weight: 300;
+  padding: 0.85rem 1rem;
+  background: #17171a;
+  border: 1px solid #2a2a2f;
+  border-radius: 6px;
+  color: #F7F5F0;
+  outline: none;
+  transition: border-color 0.2s ease;
+  caret-color: #C8FF57;
+}
+
+.inputGroup input::placeholder,
+.inputGroup textarea::placeholder {
+  color: #3a3a40;
+}
+
+.inputGroup input:focus,
+.inputGroup textarea:focus {
+  border-color: #7C5CFC;
+}
+
+.inputGroup textarea {
+  resize: none;
+  line-height: 1.6;
+}
+
+.footer {
+  margin-top: auto;
+  font-family: 'DM Mono', monospace;
+  font-size: 0.6rem;
+  color: #2e2e34;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
