@@ -1,5 +1,5 @@
 import styles from "./BuilderForm.module.css";
-
+import { useState } from "react";
 const BuilderForm = ({ cardData, setCardData }) => {
   const handleChange = (e) => {
     setCardData({
@@ -7,7 +7,7 @@ const BuilderForm = ({ cardData, setCardData }) => {
       [e.target.name]: e.target.value,
     });
   };
-
+  const [skill, setSkill] = useState("");
   return (
     <div className={styles.formContainer}>
       <div className={styles.header}>
@@ -20,6 +20,22 @@ const BuilderForm = ({ cardData, setCardData }) => {
 
       <div className={styles.fields}>
         <div className={styles.inputGroup}>
+          <label>Profile Photo</label>
+
+          <input
+            type="file"
+            accept="image/*"
+            onChange={(e) => {
+              const file = e.target.files[0];
+
+              if (!file) return;
+
+              setCardData({
+                ...cardData,
+                avatar: URL.createObjectURL(file),
+              });
+            }}
+          />
           <label htmlFor="name">Name</label>
           <input
             id="name"
@@ -54,8 +70,27 @@ const BuilderForm = ({ cardData, setCardData }) => {
             rows={5}
           />
         </div>
+        <input
+          type="text"
+          placeholder="Add Skill"
+          value={skill}
+          onChange={(e) => setSkill(e.target.value)}
+        />
       </div>
+      <button
+        onClick={() => {
+          if (!skill.trim()) return;
 
+          setCardData({
+            ...cardData,
+            skills: [...cardData.skills, skill],
+          });
+
+          setSkill("");
+        }}
+      >
+        Add Skill
+      </button>
       <div className={styles.footer}>Live preview →</div>
     </div>
   );

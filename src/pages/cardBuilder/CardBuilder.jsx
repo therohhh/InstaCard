@@ -8,6 +8,8 @@ const CardBuilder = () => {
     name: "",
     role: "",
     bio: "",
+    avatar: "",
+    skills: [],
   });
 
   return (

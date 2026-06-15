@@ -41,6 +41,19 @@
   margin-bottom: 1.5rem;
 }
 
+.avatarImage {
+  width: 74px;
+  height: 74px;
+
+  border-radius: 50%;
+
+  object-fit: cover;
+
+  margin-bottom: 2rem;
+
+  border: 2px solid #7c5cff;
+}
+
 .name {
   font-family: 'Instrument Serif', serif;
   font-style: italic;
@@ -98,6 +111,29 @@
   align-items: center;
 }
 
+.skills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+
+  justify-content: center;
+
+  margin-top: 1.5rem;
+}
+
+.skills span {
+  padding: 8px 14px;
+
+  border-radius: 999px;
+
+  background: rgba(255,255,255,.08);
+
+  border: 1px solid rgba(255,255,255,.15);
+
+  color: white;
+
+  font-size: .85rem;
+}
 .dot {
   width: 8px;
   height: 8px;
