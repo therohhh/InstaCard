@@ -1,48 +1,48 @@
 import styles from "./CardPreview.module.css";
 
 const CardPreview = ({ cardData }) => {
-  const initial = cardData.name
-    ? cardData.name.charAt(0).toUpperCase()
-    : "?";
+  const initial = cardData.name ? cardData.name.charAt(0).toUpperCase() : "?";
 
   return (
     <div className={styles.card}>
-      <span className={styles.tag}>
-        — INSTACARD
-      </span>
 
-      {cardData.avatar ? (
-        <img
-          src={cardData.avatar}
-          alt="profile"
-          className={styles.avatarImage}
-        />
-      ) : (
-        <div className={styles.avatar}>
-          {initial}
+      {/* top: avatar + name / role */}
+      <div className={styles.topRow}>
+        {cardData.avatar ? (
+          <img src={cardData.avatar} alt="profile" className={styles.avatarImage} />
+        ) : (
+          <div className={styles.avatar}>{initial}</div>
+        )}
+
+        <div className={styles.nameBlock}>
+          <h2
+            className={`${styles.name} ${
+              cardData.name ? styles.nameFilled : styles.namePlaceholder
+            }`}
+          >
+            {cardData.name || "Your Name"}
+          </h2>
+          <p className={`${styles.role} ${cardData.role ? styles.roleFilled : ""}`}>
+            {cardData.role || "your role"}
+          </p>
         </div>
-      )}
-
-      <h2 className={styles.name}>
-        {cardData.name || "Your Name"}
-      </h2>
-
-      <p className={styles.role}>
-        {cardData.role || "Your Role"}
-      </p>
-
-      <p className={styles.bio}>
-        {cardData.bio ||
-          "Your bio will appear here..."}
-      </p>
-
-      <div className={styles.skills}>
-        {cardData.skills.map((skill, index) => (
-          <span key={index}>
-            {skill}
-          </span>
-        ))}
       </div>
+
+      {/* bio */}
+      <p className={`${styles.bio} ${cardData.bio ? styles.bioFilled : ""}`}>
+        {cardData.bio || "your bio will appear here..."}
+      </p>
+
+      {/* bottom: skills + instacard label */}
+      <div className={styles.bottomRow}>
+        <div className={styles.skills}>
+          {cardData.skills.map((s, i) => (
+            <span key={i} className={styles.skillPill}>{s}</span>
+          ))}
+        </div>
+        <span className={styles.tag}>— instacard</span>
+      </div>
+
     </div>
   );
 };

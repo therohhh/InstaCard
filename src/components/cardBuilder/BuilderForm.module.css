@@ -1,104 +1,202 @@
-@import url('https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap');
 
 .formContainer {
   display: flex;
   flex-direction: column;
-  gap: 2.5rem;
+  gap: 0;
   height: 100%;
+  position: relative;
+  z-index: 1;
 }
 
+/* ── Header ── */
 .header {
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
+  margin-bottom: 3rem;
 }
 
 .eyebrow {
-  font-family: 'DM Mono', monospace;
-  font-size: 0.65rem;
-  font-weight: 500;
-  letter-spacing: 0.18em;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 1rem;
+  font-weight: 400;
+  letter-spacing: 0.26em;
   text-transform: uppercase;
-  color: #7C5CFC;
+  color: #d03131;
+  display: block;
+  margin-bottom: 0.8rem;
 }
 
 .header h1 {
-  /* font-family: 'DM Mono', monospace; */
-  font-size: 1.55rem;
-  font-weight: 400;
-  color: #F7F5F0;
-  line-height: 1.2;
+  font-family: 'Syne', sans-serif;
+  font-size: 2.2rem;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  line-height: 0.95;
   margin: 0;
+  color: transparent;
+  -webkit-text-stroke: 1px #f8d788;
 }
 
 .header h1 em {
   font-style: italic;
-  color: #C8FF57;
+  font-weight: 400;
 }
 
 .divider {
-  width: 302px;
+  margin-top: 1.2rem;
   height: 1px;
-  background: #2cd60a;
-  margin-top: 0.5rem;
+  background: linear-gradient(to right, #222 0%, transparent 100%);
 }
 
+/* ── Field sections ── */
 .fields {
   display: flex;
   flex-direction: column;
-  gap: 1.8rem;
+  gap: 2rem;
+  flex: 1;
 }
 
 .inputGroup {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+  position: relative;
 }
 
 .inputGroup label {
-  font-family: 'DM Mono', monospace;
-  font-size: 0.65rem;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.75rem;
   font-weight: 500;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.2em;
   text-transform: uppercase;
-  color: #666;
+  color: #ffffff;
 }
 
 .inputGroup input,
 .inputGroup textarea {
-  font-family: 'DM Mono', monospace;
-  font-size: 0.9rem;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 1rem;
   font-weight: 300;
-  padding: 0.85rem 1rem;
-  background: #17171a;
-  border: 1px solid #2a2a2f;
-  border-radius: 6px;
-  color: #F7F5F0;
+  padding: 0.8rem 0;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid #fafafa;
+  border-radius: 0;
+  color: #f0ede6;
   outline: none;
-  transition: border-color 0.2s ease;
-  caret-color: #C8FF57;
+  transition: border-color 0.25s ease;
+  caret-color: #f0ede6;
+  width: 100%;
 }
 
 .inputGroup input::placeholder,
 .inputGroup textarea::placeholder {
-  color: #3a3a40;
+  color: #764d76;
+  font-style: italic;
 }
 
 .inputGroup input:focus,
 .inputGroup textarea:focus {
-  border-color: #7C5CFC;
+  border-bottom-color: #6c96bd;
 }
 
 .inputGroup textarea {
   resize: none;
-  line-height: 1.6;
+  line-height: 1.75;
 }
 
+/* file input */
+.fileInput {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.75rem;
+  font-weight: 300;
+  color: #333;
+  padding: 0.6rem 0;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid #1a1a1a;
+  cursor: pointer;
+  width: 100%;
+  outline: none;
+}
+
+.fileInput::-webkit-file-upload-button {
+  display: none;
+}
+
+.fileInput::before {
+  content: 'Choose file →';
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.6rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #2e2e2e;
+  cursor: pointer;
+}
+
+/* ── Skills row ── */
+.skillRow {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.8rem;
+  margin-top: -0.5rem;
+}
+
+.skillRow input {
+  flex: 1;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 1rem;
+  font-weight: 300;
+  padding: 0.8rem 0;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid #767676;
+  color: #f0ede6;
+  outline: none;
+  caret-color: #f0ede6;
+  transition: border-color 0.25s ease;
+}
+
+.skillRow input::placeholder {
+  color: #8d8888;
+  font-style: italic;
+}
+
+.skillRow input:focus {
+  border-bottom-color: #404040;
+}
+
+.addBtn {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.8rem;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #f0ede6;
+  background: transparent;
+  border: 1px solid #2a2a2a;
+  border-radius: 100px;
+  padding: 0.45rem 1rem;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: border-color 0.25s ease, color 0.25s ease, background 0.25s ease;
+  flex-shrink: 0;
+  align-self: flex-end;
+  margin-bottom: 0.2rem;
+}
+
+.addBtn:hover {
+  border-color: #f0ede6;
+  background: #f0ede6;
+  color: #080808;
+}
+
+/* ── Footer ── */
 .footer {
   margin-top: auto;
-  font-family: 'DM Mono', monospace;
-  font-size: 0.6rem;
-  color: #2e2e34;
-  letter-spacing: 0.08em;
+  padding-top: 2rem;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.55rem;
+  color: #f7f6f6;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
 }

@@ -1,41 +1,48 @@
 import styles from "./BuilderForm.module.css";
 import { useState } from "react";
+
 const BuilderForm = ({ cardData, setCardData }) => {
-  const handleChange = (e) => {
-    setCardData({
-      ...cardData,
-      [e.target.name]: e.target.value,
-    });
-  };
   const [skill, setSkill] = useState("");
+
+  const handleChange = (e) => {
+    setCardData({ ...cardData, [e.target.name]: e.target.value });
+  };
+
+  const handleAddSkill = () => {
+    if (!skill.trim()) return;
+    setCardData({ ...cardData, skills: [...cardData.skills, skill.trim()] });
+    setSkill("");
+  };
+
+  const handleKey = (e) => {
+    if (e.key === "Enter") handleAddSkill();
+  };
+
   return (
     <div className={styles.formContainer}>
       <div className={styles.header}>
-        {/* <span className={styles.eyebrow}>Card Builder</span> */}
-        <h1>
-          Design your <em>identity.</em>
-        </h1>
+        <span className={styles.eyebrow}>Card Builder</span>
+        <h1>Design your <em>identity.</em></h1>
         <div className={styles.divider} />
       </div>
 
       <div className={styles.fields}>
-        <div className={styles.inputGroup}>
-          <label>Profile Photo</label>
 
+        <div className={styles.inputGroup}>
+          <label>Profile photo</label>
           <input
             type="file"
             accept="image/*"
+            className={styles.fileInput}
             onChange={(e) => {
               const file = e.target.files[0];
-
               if (!file) return;
-
-              setCardData({
-                ...cardData,
-                avatar: URL.createObjectURL(file),
-              });
+              setCardData({ ...cardData, avatar: URL.createObjectURL(file) });
             }}
           />
+        </div>
+
+        <div className={styles.inputGroup}>
           <label htmlFor="name">Name</label>
           <input
             id="name"
@@ -67,30 +74,28 @@ const BuilderForm = ({ cardData, setCardData }) => {
             placeholder="A few words about yourself..."
             value={cardData.bio}
             onChange={handleChange}
-            rows={5}
+            rows={4}
           />
         </div>
-        <input
-          type="text"
-          placeholder="Add Skill"
-          value={skill}
-          onChange={(e) => setSkill(e.target.value)}
-        />
+
+        <div className={styles.inputGroup}>
+          <label>Skills</label>
+          <div className={styles.skillRow}>
+            <input
+              type="text"
+              placeholder="React, Figma, Node..."
+              value={skill}
+              onChange={(e) => setSkill(e.target.value)}
+              onKeyDown={handleKey}
+            />
+            <button className={styles.addBtn} onClick={handleAddSkill}>
+              Add →
+            </button>
+          </div>
+        </div>
+
       </div>
-      <button
-        onClick={() => {
-          if (!skill.trim()) return;
 
-          setCardData({
-            ...cardData,
-            skills: [...cardData.skills, skill],
-          });
-
-          setSkill("");
-        }}
-      >
-        Add Skill
-      </button>
       <div className={styles.footer}>Live preview →</div>
     </div>
   );

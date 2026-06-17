@@ -1,143 +1,177 @@
-@import url('https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=Instrument+Serif:ital@0;1&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap');
 
+/* ── Card: landscape business-card format ── */
 .card {
-  position: relative;
+  position: absolute;
+  top: 100px;
   z-index: 1;
-  width: 360px;
-  min-height: 520px;
-  background: #0F0F11;
-  border-radius: 16px;
-  padding: 2.5rem 2rem 2rem;
-  display: flex;
-  flex-direction: column;
-  box-shadow:
-    0 0 0 1px rgba(124, 92, 252, 0.15),
-    0 32px 64px rgba(15, 15, 17, 0.22),
-    0 8px 24px rgba(15, 15, 17, 0.14);
+  width: 480px;
+  min-height: 270px;
+  background: #000000;
+  border: 1px solid #1e1e1e;
+  border-radius: 18px;
+  padding: 2.4rem 2.8rem;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  overflow: hidden;
+  transition: border-color 0.4s ease;
 }
 
-.tag {
-  font-family: 'DM Mono', monospace;
-  font-size: 0.6rem;
-  font-weight: 500;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: #7C5CFC;
-  margin-bottom: 2.5rem;
+.card:hover {
+  border-color: #535151;
+}
+
+/* corner accent line */
+.card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 60px; height: 1px;
+  background: linear-gradient(to right, #2e2e2e, transparent);
+}
+
+.card::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 1px; height: 60px;
+  background: linear-gradient(to bottom, #2e2e2e, transparent);
+}
+
+/* ── Top row: avatar + name/role ── */
+.topRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 1.4rem;
+  margin-bottom: 1.2rem;
 }
 
 .avatar {
-  width: 52px;
-  height: 52px;
+  width: 104px;
+  height: 104px;
   border-radius: 50%;
-  background: #7C5CFC;
-  color: #fff;
+  border: 1px solid #222;
+  background: #111;
+  color: #f0ede6;
   display: flex;
-  justify-content: center;
   align-items: center;
-  font-family: 'Instrument Serif', serif;
-  font-size: 1.4rem;
-  font-style: italic;
-  margin-bottom: 1.5rem;
+  justify-content: center;
+  font-family: 'Syne', sans-serif;
+  font-size: 1.2rem;
+  font-weight: 700;
+  flex-shrink: 0;
 }
 
 .avatarImage {
-  width: 74px;
-  height: 74px;
-
+  width: 104px;
+  height: 104px;
   border-radius: 50%;
-
   object-fit: cover;
+  border: 1px solid #222;
+  flex-shrink: 0;
+}
 
-  margin-bottom: 2rem;
-
-  border: 2px solid #7c5cff;
+.nameBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  padding-top: 0.15rem;
 }
 
 .name {
-  font-family: 'Instrument Serif', serif;
-  font-style: italic;
-  font-size: 2.4rem;
-  font-weight: 400;
-  color: #F7F5F0;
-  line-height: 1.1;
-  margin: 0 0 0.5rem;
+  font-family: 'Syne', sans-serif;
+  font-size: 1.65rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1;
+  margin: 0;
+  color: transparent;
+  -webkit-text-stroke: 1px #f0ede6;
+  transition: color 0.3s ease;
+}
+
+.nameFilled {
+  color: #f0ede6;
+  -webkit-text-stroke: 1px transparent;
 }
 
 .namePlaceholder {
-  color: #2e2e34;
+  -webkit-text-stroke: 1px #4c404c;
 }
 
 .role {
-  font-family: 'DM Mono', monospace;
-  font-size: 0.7rem;
-  font-weight: 500;
-  letter-spacing: 0.12em;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.62rem;
+  font-weight: 400;
+  letter-spacing: 0.2em;
   text-transform: uppercase;
-  color: #C8FF57;
-  margin: 0 0 2rem;
+  color: #383838;
+  margin-top: 0.8rem;
 }
 
-.rolePlaceholder {
-  color: #2a2a2f;
+.roleFilled {
+  color: #d3d1d1;
 }
 
-.divider {
-  width: 100%;
-  height: 1px;
-  background: #1e1e22;
-  margin-bottom: 1.5rem;
-}
-
+/* ── Bio ── */
 .bio {
-  font-family: 'DM Mono', monospace;
-  font-size: 0.8rem;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 1rem;
   font-weight: 300;
-  line-height: 1.75;
-  color: #888;
-  margin: 0;
-  flex: 1;
-}
-
-.bioPlaceholder {
-  color: #2a2a2f;
+  line-height: 1.8;
+  color: #608d69;
   font-style: italic;
+  margin: 0;
+  align-self: center;
 }
 
-.cardFooter {
-  margin-top: 2.5rem;
+.bioFilled {
+  color: #b5b2b2;
+  font-style: normal;
+}
+
+/* ── Bottom row: skills + tag ── */
+.bottomRow {
   display: flex;
+  align-items: flex-end;
   justify-content: space-between;
-  align-items: center;
+  margin-top: 1.4rem;
+  padding-top: 1.2rem;
+  border-top: 1px solid #141414;
 }
 
 .skills {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
-
-  justify-content: center;
-
-  margin-top: 1.5rem;
+  gap: 6px;
 }
 
-.skills span {
-  padding: 8px 14px;
-
-  border-radius: 999px;
-
-  background: rgba(255,255,255,.08);
-
-  border: 1px solid rgba(255,255,255,.15);
-
-  color: white;
-
-  font-size: .85rem;
+.skillPill {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.8rem;
+  font-weight: 400;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #d7cccc;
+  border: 1px solid #1e1e1e;
+  border-radius: 100px;
+  padding: 0.3rem 0.7rem;
+  background: transparent;
+  transition: border-color 0.2s ease, color 0.2s ease;
 }
-.dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: #7C5CFC;
-  opacity: 0.4;
+
+.card:hover .skillPill {
+  border-color: #2a2a2a;
+  color: #555;
+}
+
+.tag {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.55rem;
+  font-weight: 400;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #f5efef;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
