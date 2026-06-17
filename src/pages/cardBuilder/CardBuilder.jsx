@@ -10,6 +10,12 @@ const CardBuilder = () => {
     bio: "",
     avatar: "",
     skills: [],
+    socials: {
+    github: "",
+    linkedin: "",
+    portfolio: "",
+  },
+   theme: "dark",
   });
 
   return (

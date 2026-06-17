@@ -190,6 +190,42 @@
   color: #080808;
 }
 
+.skillList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.skillChip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  padding: 8px 14px;
+
+  border-radius: 999px;
+
+  background: rgba(255,255,255,0.08);
+
+  border: 1px solid rgba(255,255,255,0.12);
+
+  color: white;
+}
+
+.removeBtn {
+  background: none;
+  border: none;
+
+  color: #ff6b6b;
+
+  cursor: pointer;
+
+  font-size: 1rem;
+
+  font-weight: 700;
+}
+
 /* ── Footer ── */
 .footer {
   margin-top: auto;

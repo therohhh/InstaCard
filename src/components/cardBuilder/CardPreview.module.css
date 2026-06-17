@@ -160,9 +160,64 @@
   transition: border-color 0.2s ease, color 0.2s ease;
 }
 
+.socials {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+
+  margin-top: 20px;
+}
+
+.socialIcon {
+  width: 25px;
+  height: 25px;
+  border-radius: 50%;
+  transition: 0.3s;
+  cursor: pointer;
+}
+
+.socialIcon:hover {
+  transform: scale(1.1);
+}
+
+.portfolioLink {
+  color: white;
+  text-decoration: none;
+
+  font-size: 0.9rem;
+}
+
 .card:hover .skillPill {
   border-color: #2a2a2a;
   color: #555;
+}
+
+.dark {
+  background: #111827;
+}
+
+.purple {
+  background: linear-gradient(
+    135deg,
+    #5b21b6,
+    #7c3aed
+  );
+}
+
+.green {
+  background: linear-gradient(
+    135deg,
+    #14532d,
+    #22c55e
+  );
+}
+
+.blue {
+  background: linear-gradient(
+    135deg,
+    #1e3a8a,
+    #3b82f6
+  );
 }
 
 .tag {
