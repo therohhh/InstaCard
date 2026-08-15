@@ -1,0 +1,922 @@
+.builderPage {
+  min-height: 100vh;
+  padding: 50px 6%;
+  background: #f5f6f8;
+  color: #171717;
+}
+
+.header {
+  max-width: 1200px;
+  margin: 0 auto 40px;
+}
+
+.eyebrow {
+  margin: 0 0 8px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: #777;
+}
+
+.header h1 {
+  margin: 0;
+  font-size: clamp(32px, 4vw, 52px);
+  letter-spacing: -1.5px;
+}
+
+.subtitle {
+  margin-top: 12px;
+  color: #707070;
+  font-size: 16px;
+}
+
+/* ================================
+   BUILDER LAYOUT
+================================ */
+
+.builderContainer {
+  max-width: 1200px;
+  height: calc(100vh - 180px);
+  margin: 0 auto;
+
+  display: grid;
+  grid-template-columns: 400px 1fr;
+
+  gap: 30px;
+
+  align-items: stretch;
+}
+
+/* ================================
+   FORM
+================================ */
+
+.previewSection {
+  height: 100%;
+
+  min-height: 0;
+
+  overflow: hidden;
+  background: #ffffff;
+  border: 1px solid #e6e6e6;
+  border-radius: 20px;
+
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.05);
+}
+
+.formSection {
+  padding: 28px;
+
+  height: 100%;
+  box-sizing: border-box;
+
+  overflow-y: auto;
+
+  scrollbar-width: thin;
+
+  background: #ffffff;
+  border: 1px solid #e6e6e6;
+  border-radius: 20px;
+
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.05);
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  margin-bottom: 28px;
+}
+
+.sectionHeader h2 {
+  margin: 0;
+  font-size: 20px;
+}
+
+.sectionHeader span {
+  font-size: 12px;
+  color: #777;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+
+  gap: 26px;
+}
+
+/* ================================
+   CONTROL SECTIONS
+================================ */
+
+.controlSection {
+  padding-bottom: 25px;
+
+  border-bottom: 1px solid #eeeeee;
+}
+
+.controlSection:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.controlHeading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  margin-bottom: 14px;
+}
+
+.controlHeading label {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.controlHeading span {
+  font-size: 11px;
+  color: #999;
+}
+
+/* ================================
+   AVATAR PICKER
+================================ */
+
+.avatarGrid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.avatarOption {
+  padding: 3px;
+
+  border: 2px solid transparent;
+
+  background: transparent;
+
+  border-radius: 50%;
+
+  cursor: pointer;
+
+  transition:
+    transform 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.avatarOption:hover {
+  transform: translateY(-3px);
+}
+
+.avatarSelected {
+  border-color: #171717;
+}
+
+.avatarCircle {
+  width: 48px;
+  height: 48px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 50%;
+
+  color: white;
+
+  font-size: 17px;
+  font-weight: 700;
+}
+
+/* ================================
+   BACKGROUND UPLOAD
+================================ */
+
+.fileInput {
+  display: none;
+}
+
+.uploadButton {
+  width: 100%;
+
+  min-height: 52px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 10px;
+
+  border: 1px dashed #cfcfcf;
+
+  border-radius: 12px;
+
+  background: #fafafa;
+
+  color: #444;
+
+  font-size: 13px;
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.uploadButton:hover {
+  background: #f3f3f3;
+  border-color: #999;
+}
+
+.uploadIcon {
+  font-size: 18px;
+}
+
+.removeBackground {
+  margin-top: 9px;
+
+  border: none;
+
+  background: none;
+
+  color: #777;
+
+  font-size: 11px;
+
+  cursor: pointer;
+
+  text-decoration: underline;
+}
+
+/* ================================
+   INPUTS
+================================ */
+
+.field {
+  position: relative;
+
+  display: flex;
+  flex-direction: column;
+
+  gap: 7px;
+
+  margin-bottom: 15px;
+}
+
+.field:last-child {
+  margin-bottom: 0;
+}
+
+.field label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #555;
+}
+
+.field input,
+.field textarea {
+  width: 100%;
+
+  box-sizing: border-box;
+
+  border: 1px solid #dedede;
+
+  border-radius: 10px;
+
+  padding: 12px 14px;
+
+  font-size: 13px;
+
+  font-family: inherit;
+
+  outline: none;
+
+  background: #fafafa;
+
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s,
+    background 0.2s;
+}
+
+.field textarea {
+  resize: vertical;
+  min-height: 90px;
+}
+
+.field input:focus,
+.field textarea:focus {
+  border-color: #222;
+
+  box-shadow:
+    0 0 0 3px rgba(0, 0, 0, 0.05);
+
+  background: #ffffff;
+}
+
+.characterCount {
+  position: absolute;
+
+  right: 10px;
+  bottom: 8px;
+
+  font-size: 10px;
+
+  color: #aaa;
+}
+
+/* ================================
+   SKILLS
+================================ */
+
+.skillInputWrapper {
+  display: flex;
+
+  gap: 8px;
+}
+
+.skillInputWrapper input {
+  flex: 1;
+
+  min-width: 0;
+
+  border: 1px solid #dedede;
+
+  border-radius: 10px;
+
+  padding: 12px;
+
+  font-size: 13px;
+
+  outline: none;
+
+  background: #fafafa;
+}
+
+.addSkillButton {
+  border: none;
+
+  border-radius: 10px;
+
+  padding: 0 16px;
+
+  background: #171717;
+
+  color: white;
+
+  cursor: pointer;
+
+  font-size: 12px;
+
+  font-weight: 600;
+}
+
+.addSkillButton:disabled {
+  opacity: 0.4;
+
+  cursor: not-allowed;
+}
+
+.skillList {
+  display: flex;
+
+  flex-wrap: wrap;
+
+  gap: 7px;
+
+  margin-top: 10px;
+}
+
+.skillTag {
+  display: flex;
+
+  align-items: center;
+
+  gap: 6px;
+
+  padding: 6px 10px;
+
+  border-radius: 999px;
+
+  background: #f0f0f0;
+
+  font-size: 11px;
+
+  font-weight: 600;
+}
+
+.skillTag button {
+  border: none;
+
+  background: none;
+
+  cursor: pointer;
+
+  font-size: 15px;
+
+  line-height: 1;
+
+  color: #777;
+}
+
+/* ================================
+   PREVIEW
+================================ */
+
+.previewSection {
+  min-height: 500px;
+
+  overflow: hidden;
+}
+
+.previewHeader {
+  padding: 22px 26px;
+
+  border-bottom: 1px solid #eeeeee;
+}
+
+.previewHeader p {
+  margin: 0 0 5px;
+
+  font-size: 11px;
+
+  font-weight: 700;
+
+  letter-spacing: 1.5px;
+}
+
+.previewHeader span {
+  font-size: 12px;
+
+  color: #888;
+}
+
+.previewArea {
+  height: calc(100% - 75px);
+  min-height: 0;
+
+  box-sizing: border-box;
+
+  padding: 30px;
+
+  display: flex;
+
+  flex-direction: column;
+
+  align-items: center;
+
+  justify-content: center;
+
+  gap: 24px;
+
+  background:
+    radial-gradient(
+      circle at 20% 20%,
+      #eeeeee 1px,
+      transparent 1px
+    );
+
+  background-size: 20px 20px;
+}
+/* ================================
+   PROFILE CARD
+================================ */
+
+.profileCard {
+  position: relative;
+
+  width: min(100%, 720px);
+
+  min-height: 290px;
+
+  box-sizing: border-box;
+
+  background-color: #242424;
+
+  background-size: cover;
+
+  background-position: center;
+
+  background-repeat: no-repeat;
+
+  border-radius: 18px;
+
+  overflow: hidden;
+
+  border: 1px solid rgba(255, 255, 255, 0.15);
+
+  box-shadow:
+    0 30px 60px rgba(0, 0, 0, 0.22),
+    0 8px 15px rgba(0, 0, 0, 0.08);
+
+  transition:
+    transform 0.3s ease,
+    box-shadow 0.3s ease;
+}
+
+.profileCard:hover {
+  transform: translateY(-5px);
+
+  box-shadow:
+    0 35px 70px rgba(0, 0, 0, 0.25);
+}
+
+/* ================================
+   CARD OVERLAY
+================================ */
+
+.cardOverlay {
+  position: absolute;
+
+  inset: 0;
+
+  background:
+    linear-gradient(
+      90deg,
+      rgba(0, 0, 0, 0.85) 0%,
+      rgba(0, 0, 0, 0.62) 48%,
+      rgba(0, 0, 0, 0.35) 100%
+    ),
+    linear-gradient(
+      180deg,
+      rgba(0, 0, 0, 0) 60%,
+      rgba(0, 0, 0, 0.55) 100%
+    );
+}
+/* ================================
+   CARD INNER
+================================ */
+
+.cardInner {
+  position: relative;
+
+  z-index: 2;
+
+  min-height: 290px;
+
+  box-sizing: border-box;
+
+  display: flex;
+
+  gap: 20px;
+
+  padding: 30px;
+}
+
+/* ================================
+   CARD AVATAR
+================================ */
+
+.cardAvatar {
+  flex-shrink: 0;
+}
+
+.cardAvatar span {
+  width: 72px;
+  height: 72px;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 50%;
+
+  border: 3px solid rgba(255, 255, 255, 0.9);
+
+  color: white;
+
+  font-size: 22px;
+
+  font-weight: 700;
+
+  box-shadow:
+    0 8px 25px rgba(0, 0, 0, 0.3);
+}
+
+/* ================================
+   CARD MAIN
+================================ */
+
+.cardMain {
+  flex: 1;
+
+  min-width: 0;
+
+  display: flex;
+
+  flex-direction: column;
+
+  justify-content: space-between;
+}
+
+.identity h2 {
+  margin: 0;
+
+  color: white;
+
+  font-size: 26px;
+
+  letter-spacing: -0.5px;
+}
+
+.identity p {
+  margin: 5px 0 10px;
+
+  color: rgba(255, 255, 255, 0.85);
+
+  font-size: 14px;
+
+  font-weight: 600;
+}
+
+.identity > span {
+  display: block;
+
+  max-width: 480px;
+
+  color: rgba(255, 255, 255, 0.72);
+
+  font-size: 12px;
+
+  line-height: 1.6;
+}
+
+/* ================================
+   CARD SKILLS
+================================ */
+
+.cardSkills {
+  display: flex;
+
+  flex-wrap: wrap;
+
+  gap: 7px;
+
+  margin: 18px 0;
+}
+
+.cardSkills span {
+  padding: 6px 10px;
+
+  border: 1px solid rgba(255, 255, 255, 0.25);
+
+  border-radius: 999px;
+
+  background: rgba(255, 255, 255, 0.1);
+
+  color: white;
+
+  font-size: 10px;
+
+  font-weight: 600;
+
+  backdrop-filter: blur(8px);
+}
+
+/* ================================
+   CARD FOOTER
+================================ */
+
+.cardFooter {
+  display: flex;
+
+  align-items: center;
+
+  justify-content: space-between;
+
+  gap: 15px;
+
+  padding-top: 15px;
+
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.socialLinks {
+  display: flex;
+
+  flex-wrap: wrap;
+
+  gap: 12px;
+}
+
+.socialLinks a,
+.socialLinks span {
+  color: rgba(255, 255, 255, 0.8);
+
+  text-decoration: none;
+
+  font-size: 10px;
+
+  font-weight: 600;
+}
+
+.socialLinks a:hover {
+  color: white;
+}
+
+.messageButton {
+  flex-shrink: 0;
+
+  border: 1px solid rgba(255, 255, 255, 0.35);
+
+  border-radius: 9px;
+
+  padding: 9px 15px;
+
+  background: rgba(255, 255, 255, 0.16);
+
+  color: white;
+
+  font-size: 11px;
+
+  font-weight: 600;
+
+  cursor: pointer;
+
+  backdrop-filter: blur(10px);
+
+  transition:
+    background 0.2s ease,
+    transform 0.2s ease;
+}
+
+.messageButton:hover {
+  background: rgba(255, 255, 255, 0.25);
+
+  transform: translateY(-2px);
+}
+
+/* ================================
+   RESPONSIVE
+================================ */
+
+@media (max-width: 1000px) {
+  .builderContainer {
+    height: auto;
+    grid-template-columns: 1fr;
+  }
+
+  .formSection {
+    height: auto;
+    overflow-y: visible;
+  }
+
+  .previewSection {
+    height: auto;
+    min-height: 500px;
+  }
+
+  .previewArea {
+    height: auto;
+    min-height: 500px;
+  }
+}
+@media (max-width: 650px) {
+  .builderPage {
+    padding: 30px 16px;
+  }
+
+  .formSection {
+    padding: 20px;
+  }
+
+  .previewArea {
+    padding: 25px 15px;
+  }
+
+  .profileCard {
+    min-height: 360px;
+  }
+
+  .cardInner {
+    min-height: 360px;
+
+    flex-direction: column;
+
+    padding: 22px;
+  }
+
+  .cardAvatar span {
+    width: 60px;
+    height: 60px;
+
+    font-size: 18px;
+  }
+
+  .identity h2 {
+    font-size: 22px;
+  }
+
+  .cardFooter {
+    align-items: flex-start;
+
+    flex-direction: column;
+  }
+
+  .messageButton {
+    width: 100%;
+  }
+
+  .cardActions {
+  width: 100%;
+
+  flex-direction: column;
+}
+
+.downloadButton,
+.publishButton {
+  width: 100%;
+}
+}
+/* =========================================================
+   CARD ACTIONS
+========================================================= */
+
+.cardActions {
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  gap: 12px;
+
+  flex-wrap: wrap;
+}
+
+
+/* DOWNLOAD */
+
+.downloadButton {
+  min-width: 150px;
+
+  padding: 11px 18px;
+
+  border: 1px solid #d8d8d8;
+
+  border-radius: 10px;
+
+  background: #ffffff;
+
+  color: #222;
+
+  font-size: 12px;
+
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.downloadButton:hover {
+  background: #f5f5f5;
+
+  border-color: #aaa;
+
+  transform: translateY(-2px);
+}
+
+
+/* PUBLISH */
+
+.publishButton {
+  min-width: 210px;
+
+  padding: 11px 18px;
+
+  border: 1px solid #171717;
+
+  border-radius: 10px;
+
+  background: #171717;
+
+  color: #ffffff;
+
+  font-size: 12px;
+
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition:
+    background 0.2s ease,
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.publishButton:hover {
+  background: #333333;
+
+  transform: translateY(-2px);
+
+  box-shadow:
+    0 8px 20px rgba(0, 0, 0, 0.15);
+}
