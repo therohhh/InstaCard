@@ -25,7 +25,7 @@ const Welcome = () => {
 
       <div className={styles.btnContainer}>
         <button
-          onClick={() => navigate("/builder")}
+          onClick={() => navigate("/login")}
           className={styles.startBtn}
         >
           Get started

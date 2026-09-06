@@ -1,922 +1,1217 @@
+/* =========================================================
+   BUILDER PAGE
+========================================================= */
+
 .builderPage {
-  min-height: 100vh;
-  padding: 50px 6%;
-  background: #f5f6f8;
-  color: #171717;
+    min-height: 100vh;
+    padding: 50px 6%;
+    box-sizing: border-box;
+
+    background: #f5f6f8;
+    color: #171717;
 }
 
+
+/* =========================================================
+   HEADER
+========================================================= */
+
 .header {
-  max-width: 1200px;
-  margin: 0 auto 40px;
+    max-width: 1200px;
+    margin: 0 auto 40px;
 }
 
 .eyebrow {
-  margin: 0 0 8px;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 2px;
-  color: #777;
+    margin: 0 0 8px;
+
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 2px;
+
+    color: #777;
 }
 
 .header h1 {
-  margin: 0;
-  font-size: clamp(32px, 4vw, 52px);
-  letter-spacing: -1.5px;
+    margin: 0;
+
+    font-size: clamp(32px, 4vw, 52px);
+    letter-spacing: -1.5px;
 }
 
 .subtitle {
-  margin-top: 12px;
-  color: #707070;
-  font-size: 16px;
+    margin-top: 12px;
+
+    color: #707070;
+    font-size: 16px;
 }
 
-/* ================================
+
+/* =========================================================
    BUILDER LAYOUT
-================================ */
+========================================================= */
 
 .builderContainer {
-  max-width: 1200px;
-  height: calc(100vh - 180px);
-  margin: 0 auto;
+    max-width: 1200px;
 
-  display: grid;
-  grid-template-columns: 400px 1fr;
+    height: calc(100vh - 180px);
 
-  gap: 30px;
+    margin: 0 auto;
 
-  align-items: stretch;
+    display: grid;
+
+    grid-template-columns: 400px 1fr;
+
+    gap: 30px;
+
+    align-items: stretch;
 }
 
-/* ================================
-   FORM
-================================ */
 
-.previewSection {
-  height: 100%;
-
-  min-height: 0;
-
-  overflow: hidden;
-  background: #ffffff;
-  border: 1px solid #e6e6e6;
-  border-radius: 20px;
-
-  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.05);
-}
+/* =========================================================
+   FORM SECTION
+========================================================= */
 
 .formSection {
-  padding: 28px;
+    padding: 28px;
 
-  height: 100%;
-  box-sizing: border-box;
+    height: 100%;
 
-  overflow-y: auto;
+    box-sizing: border-box;
 
-  scrollbar-width: thin;
+    overflow-y: auto;
 
-  background: #ffffff;
-  border: 1px solid #e6e6e6;
-  border-radius: 20px;
+    scrollbar-width: thin;
 
-  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.05);
+    background: #ffffff;
+
+    border: 1px solid #e6e6e6;
+
+    border-radius: 20px;
+
+    box-shadow:
+        0 12px 35px rgba(0, 0, 0, 0.05);
 }
 
-.sectionHeader {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
 
-  margin-bottom: 28px;
+/* =========================================================
+   SECTION HEADER
+========================================================= */
+
+.sectionHeader {
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    margin-bottom: 28px;
 }
 
 .sectionHeader h2 {
-  margin: 0;
-  font-size: 20px;
+    margin: 0;
+
+    font-size: 20px;
 }
 
 .sectionHeader span {
-  font-size: 12px;
-  color: #777;
+    font-size: 12px;
+
+    color: #777;
 }
+
+
+/* =========================================================
+   FORM
+========================================================= */
 
 .form {
-  display: flex;
-  flex-direction: column;
+    display: flex;
 
-  gap: 26px;
+    flex-direction: column;
+
+    gap: 26px;
 }
 
-/* ================================
+
+/* =========================================================
    CONTROL SECTIONS
-================================ */
+========================================================= */
 
 .controlSection {
-  padding-bottom: 25px;
+    padding-bottom: 25px;
 
-  border-bottom: 1px solid #eeeeee;
+    border-bottom: 1px solid #eeeeee;
 }
 
 .controlSection:last-child {
-  border-bottom: none;
-  padding-bottom: 0;
+    border-bottom: none;
+
+    padding-bottom: 0;
 }
 
 .controlHeading {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+    display: flex;
 
-  margin-bottom: 14px;
+    align-items: center;
+
+    justify-content: space-between;
+
+    margin-bottom: 14px;
 }
 
 .controlHeading label {
-  font-size: 14px;
-  font-weight: 700;
+    font-size: 14px;
+
+    font-weight: 700;
 }
 
 .controlHeading span {
-  font-size: 11px;
-  color: #999;
+    font-size: 11px;
+
+    color: #999;
 }
 
-/* ================================
-   AVATAR PICKER
-================================ */
 
-.avatarGrid {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-}
-
-.avatarOption {
-  padding: 3px;
-
-  border: 2px solid transparent;
-
-  background: transparent;
-
-  border-radius: 50%;
-
-  cursor: pointer;
-
-  transition:
-    transform 0.2s ease,
-    border-color 0.2s ease;
-}
-
-.avatarOption:hover {
-  transform: translateY(-3px);
-}
-
-.avatarSelected {
-  border-color: #171717;
-}
-
-.avatarCircle {
-  width: 48px;
-  height: 48px;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  border-radius: 50%;
-
-  color: white;
-
-  font-size: 17px;
-  font-weight: 700;
-}
-
-/* ================================
-   BACKGROUND UPLOAD
-================================ */
+/* =========================================================
+   FILE INPUT
+========================================================= */
 
 .fileInput {
-  display: none;
+    display: none;
 }
 
+
+/* =========================================================
+   PROFILE UPLOAD AREA
+========================================================= */
+
+.profileUploadArea {
+    display: flex;
+
+    align-items: center;
+
+    gap: 14px;
+
+    margin-bottom: 12px;
+
+    padding: 14px;
+
+    border: 1px solid #eeeeee;
+
+    border-radius: 14px;
+
+    background: #fafafa;
+}
+
+.uploadedAvatar,
+.emptyAvatar {
+    width: 58px;
+
+    height: 58px;
+
+    flex-shrink: 0;
+
+    border-radius: 50%;
+}
+
+.uploadedAvatar {
+    display: block;
+
+    object-fit: cover;
+
+    border: 2px solid #171717;
+}
+
+.emptyAvatar {
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    background: #171717;
+
+    color: #ffffff;
+
+    font-size: 20px;
+
+    font-weight: 700;
+}
+
+.profileUploadInfo {
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 4px;
+}
+
+.profileUploadInfo strong {
+    font-size: 12px;
+}
+
+.profileUploadInfo span {
+    font-size: 10px;
+
+    line-height: 1.5;
+
+    color: #888;
+}
+
+
+/* =========================================================
+   UPLOAD BUTTON
+========================================================= */
+
 .uploadButton {
-  width: 100%;
+    width: 100%;
 
-  min-height: 52px;
+    min-height: 52px;
 
-  display: flex;
-  align-items: center;
-  justify-content: center;
+    display: flex;
 
-  gap: 10px;
+    align-items: center;
 
-  border: 1px dashed #cfcfcf;
+    justify-content: center;
 
-  border-radius: 12px;
+    gap: 10px;
 
-  background: #fafafa;
+    border: 1px dashed #cfcfcf;
 
-  color: #444;
+    border-radius: 12px;
 
-  font-size: 13px;
-  font-weight: 600;
+    background: #fafafa;
 
-  cursor: pointer;
+    color: #444;
 
-  transition:
-    background 0.2s ease,
-    border-color 0.2s ease;
+    font-size: 13px;
+
+    font-weight: 600;
+
+    cursor: pointer;
+
+    transition:
+        background 0.2s ease,
+        border-color 0.2s ease,
+        transform 0.2s ease;
 }
 
 .uploadButton:hover {
-  background: #f3f3f3;
-  border-color: #999;
+    background: #f3f3f3;
+
+    border-color: #999;
+
+    transform: translateY(-1px);
 }
 
-.uploadIcon {
-  font-size: 18px;
-}
+
+/* =========================================================
+   REMOVE BACKGROUND / IMAGE
+========================================================= */
 
 .removeBackground {
-  margin-top: 9px;
+    margin-top: 9px;
 
-  border: none;
+    border: none;
 
-  background: none;
+    background: none;
 
-  color: #777;
+    color: #777;
 
-  font-size: 11px;
+    font-size: 11px;
 
-  cursor: pointer;
+    cursor: pointer;
 
-  text-decoration: underline;
+    text-decoration: underline;
 }
 
-/* ================================
+.removeBackground:hover {
+    color: #171717;
+}
+
+
+/* =========================================================
+   BACKGROUND PREVIEW
+========================================================= */
+
+.backgroundPreview {
+    position: relative;
+
+    margin-top: 12px;
+
+    overflow: hidden;
+
+    border-radius: 12px;
+
+    border: 1px solid #e5e5e5;
+
+    background: #eeeeee;
+}
+
+.backgroundPreview img {
+    width: 100%;
+
+    height: 110px;
+
+    display: block;
+
+    object-fit: cover;
+}
+
+.backgroundPreview button {
+    position: absolute;
+
+    right: 8px;
+
+    bottom: 8px;
+
+    padding: 7px 10px;
+
+    border: 1px solid rgba(255, 255, 255, 0.5);
+
+    border-radius: 7px;
+
+    background: rgba(0, 0, 0, 0.7);
+
+    color: white;
+
+    font-size: 10px;
+
+    cursor: pointer;
+
+    backdrop-filter: blur(8px);
+}
+
+
+/* =========================================================
    INPUTS
-================================ */
+========================================================= */
 
 .field {
-  position: relative;
+    position: relative;
 
-  display: flex;
-  flex-direction: column;
+    display: flex;
 
-  gap: 7px;
+    flex-direction: column;
 
-  margin-bottom: 15px;
+    gap: 7px;
+
+    margin-bottom: 15px;
 }
 
 .field:last-child {
-  margin-bottom: 0;
+    margin-bottom: 0;
 }
 
 .field label {
-  font-size: 12px;
-  font-weight: 600;
-  color: #555;
+    font-size: 12px;
+
+    font-weight: 600;
+
+    color: #555;
 }
 
 .field input,
 .field textarea {
-  width: 100%;
+    width: 100%;
 
-  box-sizing: border-box;
+    box-sizing: border-box;
 
-  border: 1px solid #dedede;
+    border: 1px solid #dedede;
 
-  border-radius: 10px;
+    border-radius: 10px;
 
-  padding: 12px 14px;
+    padding: 12px 14px;
 
-  font-size: 13px;
+    font-size: 13px;
 
-  font-family: inherit;
+    font-family: inherit;
 
-  outline: none;
+    outline: none;
 
-  background: #fafafa;
+    background: #fafafa;
 
-  transition:
-    border-color 0.2s,
-    box-shadow 0.2s,
-    background 0.2s;
+    color: #171717;
+
+    transition:
+        border-color 0.2s,
+        box-shadow 0.2s,
+        background 0.2s;
+}
+
+.field input::placeholder,
+.field textarea::placeholder {
+    color: #aaaaaa;
 }
 
 .field textarea {
-  resize: vertical;
-  min-height: 90px;
+    resize: vertical;
+
+    min-height: 90px;
 }
 
 .field input:focus,
 .field textarea:focus {
-  border-color: #222;
+    border-color: #222;
 
-  box-shadow:
-    0 0 0 3px rgba(0, 0, 0, 0.05);
+    box-shadow:
+        0 0 0 3px rgba(0, 0, 0, 0.05);
 
-  background: #ffffff;
+    background: #ffffff;
 }
 
 .characterCount {
-  position: absolute;
+    position: absolute;
 
-  right: 10px;
-  bottom: 8px;
+    right: 10px;
 
-  font-size: 10px;
+    bottom: 8px;
 
-  color: #aaa;
+    font-size: 10px;
+
+    color: #aaa;
 }
 
-/* ================================
+
+/* =========================================================
    SKILLS
-================================ */
+========================================================= */
 
 .skillInputWrapper {
-  display: flex;
+    display: flex;
 
-  gap: 8px;
+    gap: 8px;
 }
 
 .skillInputWrapper input {
-  flex: 1;
+    flex: 1;
 
-  min-width: 0;
+    min-width: 0;
 
-  border: 1px solid #dedede;
+    border: 1px solid #dedede;
 
-  border-radius: 10px;
+    border-radius: 10px;
 
-  padding: 12px;
+    padding: 12px;
 
-  font-size: 13px;
+    font-size: 13px;
 
-  outline: none;
+    outline: none;
 
-  background: #fafafa;
+    background: #fafafa;
+
+    color: #171717;
+}
+
+.skillInputWrapper input:focus {
+    border-color: #222;
 }
 
 .addSkillButton {
-  border: none;
+    border: none;
 
-  border-radius: 10px;
+    border-radius: 10px;
 
-  padding: 0 16px;
+    padding: 0 16px;
 
-  background: #171717;
+    background: #171717;
 
-  color: white;
+    color: white;
 
-  cursor: pointer;
+    cursor: pointer;
 
-  font-size: 12px;
+    font-size: 12px;
 
-  font-weight: 600;
+    font-weight: 600;
+}
+
+.addSkillButton:hover {
+    background: #333;
 }
 
 .addSkillButton:disabled {
-  opacity: 0.4;
+    opacity: 0.4;
 
-  cursor: not-allowed;
+    cursor: not-allowed;
 }
 
 .skillList {
-  display: flex;
+    display: flex;
 
-  flex-wrap: wrap;
+    flex-wrap: wrap;
 
-  gap: 7px;
+    gap: 7px;
 
-  margin-top: 10px;
+    margin-top: 10px;
 }
 
 .skillTag {
-  display: flex;
+    display: flex;
 
-  align-items: center;
+    align-items: center;
 
-  gap: 6px;
+    gap: 6px;
 
-  padding: 6px 10px;
+    padding: 6px 10px;
 
-  border-radius: 999px;
+    border-radius: 999px;
 
-  background: #f0f0f0;
+    background: #f0f0f0;
 
-  font-size: 11px;
+    font-size: 11px;
 
-  font-weight: 600;
+    font-weight: 600;
 }
 
 .skillTag button {
-  border: none;
+    border: none;
 
-  background: none;
+    background: none;
 
-  cursor: pointer;
+    cursor: pointer;
 
-  font-size: 15px;
+    font-size: 15px;
 
-  line-height: 1;
+    line-height: 1;
 
-  color: #777;
+    color: #777;
 }
 
-/* ================================
-   PREVIEW
-================================ */
+.skillTag button:hover {
+    color: #000;
+}
+
+
+/* =========================================================
+   ERROR
+========================================================= */
+
+.errorMessage {
+    margin: 0;
+
+    padding: 10px 12px;
+
+    border-radius: 9px;
+
+    background: #fff1f1;
+
+    color: #d33;
+
+    font-size: 12px;
+
+    text-align: center;
+}
+
+
+/* =========================================================
+   PREVIEW SECTION
+========================================================= */
 
 .previewSection {
-  min-height: 500px;
+    height: 100%;
 
-  overflow: hidden;
+    min-height: 500px;
+
+    overflow: hidden;
+
+    background: #ffffff;
+
+    border: 1px solid #e6e6e6;
+
+    border-radius: 20px;
+
+    box-shadow:
+        0 12px 35px rgba(0, 0, 0, 0.05);
 }
 
 .previewHeader {
-  padding: 22px 26px;
+    padding: 22px 26px;
 
-  border-bottom: 1px solid #eeeeee;
+    border-bottom: 1px solid #eeeeee;
 }
 
 .previewHeader p {
-  margin: 0 0 5px;
+    margin: 0 0 5px;
 
-  font-size: 11px;
+    font-size: 11px;
 
-  font-weight: 700;
+    font-weight: 700;
 
-  letter-spacing: 1.5px;
+    letter-spacing: 1.5px;
 }
 
 .previewHeader span {
-  font-size: 12px;
+    font-size: 12px;
 
-  color: #888;
+    color: #888;
 }
+
+
+/* =========================================================
+   PREVIEW AREA
+========================================================= */
 
 .previewArea {
-  height: calc(100% - 75px);
-  min-height: 0;
+    height: calc(100% - 75px);
 
-  box-sizing: border-box;
+    min-height: 0;
 
-  padding: 30px;
+    box-sizing: border-box;
 
-  display: flex;
+    padding: 30px;
 
-  flex-direction: column;
+    display: flex;
 
-  align-items: center;
+    flex-direction: column;
 
-  justify-content: center;
+    align-items: center;
 
-  gap: 24px;
+    justify-content: center;
 
-  background:
-    radial-gradient(
-      circle at 20% 20%,
-      #eeeeee 1px,
-      transparent 1px
-    );
+    gap: 24px;
 
-  background-size: 20px 20px;
+    background-color: #fafafa;
+
+    background-image:
+        radial-gradient(
+            circle at 20% 20%,
+            #eeeeee 1px,
+            transparent 1px
+        );
+
+    background-size: 20px 20px;
 }
-/* ================================
+
+
+/* =========================================================
    PROFILE CARD
-================================ */
+========================================================= */
 
 .profileCard {
-  position: relative;
+    position: relative;
 
-  width: min(100%, 720px);
+    width: min(100%, 720px);
 
-  min-height: 290px;
+    min-height: 290px;
 
-  box-sizing: border-box;
+    box-sizing: border-box;
 
-  background-color: #242424;
+    background-color: #242424;
 
-  background-size: cover;
+    background-size: cover;
 
-  background-position: center;
+    background-position: center;
 
-  background-repeat: no-repeat;
+    background-repeat: no-repeat;
 
-  border-radius: 18px;
+    border-radius: 18px;
 
-  overflow: hidden;
+    overflow: hidden;
 
-  border: 1px solid rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.15);
 
-  box-shadow:
-    0 30px 60px rgba(0, 0, 0, 0.22),
-    0 8px 15px rgba(0, 0, 0, 0.08);
+    box-shadow:
+        0 30px 60px rgba(0, 0, 0, 0.22),
+        0 8px 15px rgba(0, 0, 0, 0.08);
 
-  transition:
-    transform 0.3s ease,
-    box-shadow 0.3s ease;
+    transition:
+        transform 0.3s ease,
+        box-shadow 0.3s ease;
 }
 
 .profileCard:hover {
-  transform: translateY(-5px);
+    transform: translateY(-5px);
 
-  box-shadow:
-    0 35px 70px rgba(0, 0, 0, 0.25);
+    box-shadow:
+        0 35px 70px rgba(0, 0, 0, 0.25);
 }
 
-/* ================================
+
+/* =========================================================
    CARD OVERLAY
-================================ */
+========================================================= */
 
 .cardOverlay {
-  position: absolute;
+    position: absolute;
 
-  inset: 0;
+    inset: 0;
 
-  background:
-    linear-gradient(
-      90deg,
-      rgba(0, 0, 0, 0.85) 0%,
-      rgba(0, 0, 0, 0.62) 48%,
-      rgba(0, 0, 0, 0.35) 100%
-    ),
-    linear-gradient(
-      180deg,
-      rgba(0, 0, 0, 0) 60%,
-      rgba(0, 0, 0, 0.55) 100%
-    );
+    background:
+        linear-gradient(
+            90deg,
+            rgba(0, 0, 0, 0.85) 0%,
+            rgba(0, 0, 0, 0.62) 48%,
+            rgba(0, 0, 0, 0.35) 100%
+        ),
+
+        linear-gradient(
+            180deg,
+            rgba(0, 0, 0, 0) 60%,
+            rgba(0, 0, 0, 0.55) 100%
+        );
 }
-/* ================================
+
+
+/* =========================================================
    CARD INNER
-================================ */
+========================================================= */
 
 .cardInner {
-  position: relative;
+    position: relative;
 
-  z-index: 2;
+    z-index: 2;
 
-  min-height: 290px;
+    min-height: 290px;
 
-  box-sizing: border-box;
+    box-sizing: border-box;
 
-  display: flex;
+    display: flex;
 
-  gap: 20px;
+    gap: 20px;
 
-  padding: 30px;
+    padding: 30px;
 }
 
-/* ================================
+
+/* =========================================================
    CARD AVATAR
-================================ */
+========================================================= */
 
 .cardAvatar {
-  flex-shrink: 0;
+    flex-shrink: 0;
+}
+
+.cardAvatar span,
+.cardAvatar img {
+    width: 72px;
+
+    height: 72px;
+
+    display: block;
+
+    border-radius: 50%;
+
+    border: 3px solid rgba(255, 255, 255, 0.9);
+
+    box-shadow:
+        0 8px 25px rgba(0, 0, 0, 0.3);
+
+    box-sizing: border-box;
 }
 
 .cardAvatar span {
-  width: 72px;
-  height: 72px;
+    display: flex;
 
-  display: flex;
+    align-items: center;
 
-  align-items: center;
-  justify-content: center;
+    justify-content: center;
 
-  border-radius: 50%;
+    color: white;
 
-  border: 3px solid rgba(255, 255, 255, 0.9);
+    font-size: 22px;
 
-  color: white;
-
-  font-size: 22px;
-
-  font-weight: 700;
-
-  box-shadow:
-    0 8px 25px rgba(0, 0, 0, 0.3);
+    font-weight: 700;
 }
 
-/* ================================
+.cardAvatar img {
+    object-fit: cover;
+}
+
+
+/* =========================================================
    CARD MAIN
-================================ */
+========================================================= */
 
 .cardMain {
-  flex: 1;
+    flex: 1;
 
-  min-width: 0;
+    min-width: 0;
 
-  display: flex;
+    display: flex;
 
-  flex-direction: column;
+    flex-direction: column;
 
-  justify-content: space-between;
+    justify-content: space-between;
 }
 
 .identity h2 {
-  margin: 0;
+    margin: 0;
 
-  color: white;
+    color: white;
 
-  font-size: 26px;
+    font-size: 26px;
 
-  letter-spacing: -0.5px;
+    letter-spacing: -0.5px;
 }
 
 .identity p {
-  margin: 5px 0 10px;
+    margin: 5px 0 10px;
 
-  color: rgba(255, 255, 255, 0.85);
+    color: rgba(255, 255, 255, 0.85);
 
-  font-size: 14px;
+    font-size: 14px;
 
-  font-weight: 600;
+    font-weight: 600;
 }
 
 .identity > span {
-  display: block;
+    display: block;
 
-  max-width: 480px;
+    max-width: 480px;
 
-  color: rgba(255, 255, 255, 0.72);
+    color: rgba(255, 255, 255, 0.72);
 
-  font-size: 12px;
+    font-size: 12px;
 
-  line-height: 1.6;
+    line-height: 1.6;
 }
 
-/* ================================
+
+/* =========================================================
    CARD SKILLS
-================================ */
+========================================================= */
 
 .cardSkills {
-  display: flex;
+    display: flex;
 
-  flex-wrap: wrap;
+    flex-wrap: wrap;
 
-  gap: 7px;
+    gap: 7px;
 
-  margin: 18px 0;
+    margin: 18px 0;
 }
 
 .cardSkills span {
-  padding: 6px 10px;
+    padding: 6px 10px;
 
-  border: 1px solid rgba(255, 255, 255, 0.25);
+    border: 1px solid rgba(255, 255, 255, 0.25);
 
-  border-radius: 999px;
+    border-radius: 999px;
 
-  background: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.1);
 
-  color: white;
+    color: white;
 
-  font-size: 10px;
+    font-size: 10px;
 
-  font-weight: 600;
+    font-weight: 600;
 
-  backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px);
 }
 
-/* ================================
+
+/* =========================================================
    CARD FOOTER
-================================ */
+========================================================= */
 
 .cardFooter {
-  display: flex;
+    display: flex;
 
-  align-items: center;
+    align-items: center;
 
-  justify-content: space-between;
+    justify-content: space-between;
 
-  gap: 15px;
+    gap: 15px;
 
-  padding-top: 15px;
+    padding-top: 15px;
 
-  border-top: 1px solid rgba(255, 255, 255, 0.2);
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .socialLinks {
-  display: flex;
+    display: flex;
 
-  flex-wrap: wrap;
+    flex-wrap: wrap;
 
-  gap: 12px;
+    gap: 12px;
 }
 
 .socialLinks a,
 .socialLinks span {
-  color: rgba(255, 255, 255, 0.8);
+    color: rgba(255, 255, 255, 0.8);
 
-  text-decoration: none;
+    text-decoration: none;
 
-  font-size: 10px;
+    font-size: 10px;
 
-  font-weight: 600;
+    font-weight: 600;
 }
 
 .socialLinks a:hover {
-  color: white;
+    color: white;
 }
 
+
+/* =========================================================
+   MESSAGE
+========================================================= */
+
 .messageButton {
-  flex-shrink: 0;
+    flex-shrink: 0;
 
-  border: 1px solid rgba(255, 255, 255, 0.35);
+    border: 1px solid rgba(255, 255, 255, 0.35);
 
-  border-radius: 9px;
+    border-radius: 9px;
 
-  padding: 9px 15px;
+    padding: 9px 15px;
 
-  background: rgba(255, 255, 255, 0.16);
+    background: rgba(255, 255, 255, 0.16);
 
-  color: white;
+    color: white;
 
-  font-size: 11px;
+    font-size: 11px;
 
-  font-weight: 600;
+    font-weight: 600;
 
-  cursor: pointer;
+    cursor: pointer;
 
-  backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
 
-  transition:
-    background 0.2s ease,
-    transform 0.2s ease;
+    transition:
+        background 0.2s ease,
+        transform 0.2s ease;
 }
 
 .messageButton:hover {
-  background: rgba(255, 255, 255, 0.25);
+    background: rgba(255, 255, 255, 0.25);
 
-  transform: translateY(-2px);
+    transform: translateY(-2px);
 }
 
-/* ================================
-   RESPONSIVE
-================================ */
 
-@media (max-width: 1000px) {
-  .builderContainer {
-    height: auto;
-    grid-template-columns: 1fr;
-  }
-
-  .formSection {
-    height: auto;
-    overflow-y: visible;
-  }
-
-  .previewSection {
-    height: auto;
-    min-height: 500px;
-  }
-
-  .previewArea {
-    height: auto;
-    min-height: 500px;
-  }
-}
-@media (max-width: 650px) {
-  .builderPage {
-    padding: 30px 16px;
-  }
-
-  .formSection {
-    padding: 20px;
-  }
-
-  .previewArea {
-    padding: 25px 15px;
-  }
-
-  .profileCard {
-    min-height: 360px;
-  }
-
-  .cardInner {
-    min-height: 360px;
-
-    flex-direction: column;
-
-    padding: 22px;
-  }
-
-  .cardAvatar span {
-    width: 60px;
-    height: 60px;
-
-    font-size: 18px;
-  }
-
-  .identity h2 {
-    font-size: 22px;
-  }
-
-  .cardFooter {
-    align-items: flex-start;
-
-    flex-direction: column;
-  }
-
-  .messageButton {
-    width: 100%;
-  }
-
-  .cardActions {
-  width: 100%;
-
-  flex-direction: column;
-}
-
-.downloadButton,
-.publishButton {
-  width: 100%;
-}
-}
 /* =========================================================
    CARD ACTIONS
 ========================================================= */
 
 .cardActions {
-  display: flex;
+    display: flex;
 
-  align-items: center;
+    align-items: center;
 
-  justify-content: center;
+    justify-content: center;
 
-  gap: 12px;
+    gap: 12px;
 
-  flex-wrap: wrap;
+    flex-wrap: wrap;
+
+    width: 100%;
 }
 
 
-/* DOWNLOAD */
+/* =========================================================
+   DOWNLOAD
+========================================================= */
 
 .downloadButton {
-  min-width: 150px;
+    min-width: 150px;
 
-  padding: 11px 18px;
+    padding: 11px 18px;
 
-  border: 1px solid #d8d8d8;
+    border: 1px solid #d8d8d8;
 
-  border-radius: 10px;
+    border-radius: 10px;
 
-  background: #ffffff;
+    background: #ffffff;
 
-  color: #222;
+    color: #222;
 
-  font-size: 12px;
+    font-size: 12px;
 
-  font-weight: 600;
+    font-weight: 600;
 
-  cursor: pointer;
+    cursor: pointer;
 
-  transition:
-    background 0.2s ease,
-    border-color 0.2s ease,
-    transform 0.2s ease;
+    transition:
+        background 0.2s ease,
+        border-color 0.2s ease,
+        transform 0.2s ease;
 }
 
 .downloadButton:hover {
-  background: #f5f5f5;
+    background: #f5f5f5;
 
-  border-color: #aaa;
+    border-color: #aaa;
 
-  transform: translateY(-2px);
+    transform: translateY(-2px);
 }
 
 
-/* PUBLISH */
+/* =========================================================
+   PUBLISH
+========================================================= */
 
 .publishButton {
-  min-width: 210px;
+    min-width: 210px;
 
-  padding: 11px 18px;
+    padding: 11px 18px;
 
-  border: 1px solid #171717;
+    border: 1px solid #171717;
 
-  border-radius: 10px;
+    border-radius: 10px;
 
-  background: #171717;
+    background: #171717;
 
-  color: #ffffff;
+    color: #ffffff;
 
-  font-size: 12px;
+    font-size: 12px;
 
-  font-weight: 600;
+    font-weight: 600;
 
-  cursor: pointer;
+    cursor: pointer;
 
-  transition:
-    background 0.2s ease,
-    transform 0.2s ease,
-    box-shadow 0.2s ease;
+    transition:
+        background 0.2s ease,
+        transform 0.2s ease,
+        box-shadow 0.2s ease;
 }
 
 .publishButton:hover {
-  background: #333333;
+    background: #333333;
 
-  transform: translateY(-2px);
+    transform: translateY(-2px);
 
-  box-shadow:
-    0 8px 20px rgba(0, 0, 0, 0.15);
+    box-shadow:
+        0 8px 20px rgba(0, 0, 0, 0.15);
+}
+
+
+/* =========================================================
+   TABLET
+========================================================= */
+
+@media (max-width: 1000px) {
+
+    .builderContainer {
+        height: auto;
+
+        grid-template-columns: 1fr;
+    }
+
+    .formSection {
+        height: auto;
+
+        overflow-y: visible;
+    }
+
+    .previewSection {
+        height: auto;
+
+        min-height: 500px;
+    }
+
+    .previewArea {
+        height: auto;
+
+        min-height: 500px;
+    }
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 650px) {
+
+    .builderPage {
+        padding: 30px 16px;
+    }
+
+    .header {
+        margin-bottom: 25px;
+    }
+
+    .formSection {
+        padding: 20px;
+    }
+
+    .previewArea {
+        padding: 25px 15px;
+    }
+
+    .profileCard {
+        min-height: 360px;
+    }
+
+    .cardInner {
+        min-height: 360px;
+
+        flex-direction: column;
+
+        padding: 22px;
+    }
+
+    .cardAvatar span,
+    .cardAvatar img {
+        width: 60px;
+
+        height: 60px;
+    }
+
+    .cardAvatar span {
+        font-size: 18px;
+    }
+
+    .identity h2 {
+        font-size: 22px;
+    }
+
+    .cardFooter {
+        align-items: flex-start;
+
+        flex-direction: column;
+    }
+
+    .messageButton {
+        width: 100%;
+    }
+
+    .cardActions {
+        width: 100%;
+
+        flex-direction: column;
+    }
+
+    .downloadButton,
+    .publishButton {
+        width: 100%;
+    }
+}
+
+
+/* =========================================================
+   SMALL MOBILE
+========================================================= */
+
+@media (max-width: 450px) {
+
+    .builderPage {
+        padding: 22px 12px;
+    }
+
+    .header h1 {
+        font-size: 34px;
+    }
+
+    .subtitle {
+        font-size: 14px;
+    }
+
+    .formSection {
+        padding: 18px;
+    }
+
+    .profileCard {
+        min-height: 390px;
+    }
+
+    .cardInner {
+        min-height: 390px;
+
+        padding: 20px;
+    }
+
+    .cardSkills {
+        margin: 12px 0;
+    }
 }

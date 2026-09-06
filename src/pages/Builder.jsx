@@ -1,19 +1,17 @@
 import { useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import styles from "./Builder.module.css";
 import html2canvas from "html2canvas";
 
-
-const avatars = [
-    { id: 1, label: "R", color: "#1f2937" },
-    { id: 2, label: "A", color: "#334155" },
-    { id: 3, label: "S", color: "#475569" },
-    { id: 4, label: "M", color: "#374151" },
-    { id: 5, label: "J", color: "#52525b" },
-    { id: 6, label: "K", color: "#3f3f46" },
-];
+const fallbackAvatar = {
+    color: "#1f2937",
+};
 
 const Builder = () => {
-    const fileInputRef = useRef(null);
+    const navigate = useNavigate();
+
+    const backgroundInputRef = useRef(null);
+    const avatarInputRef = useRef(null);
     const cardRef = useRef(null);
 
     const [card, setCard] = useState({
@@ -27,8 +25,16 @@ const Builder = () => {
     });
 
     const [skillInput, setSkillInput] = useState("");
-    const [selectedAvatar, setSelectedAvatar] = useState(avatars[0]);
+
+    const [avatarImage, setAvatarImage] = useState(null);
     const [backgroundImage, setBackgroundImage] = useState(null);
+
+    const [error, setError] = useState("");
+    const [saving, setSaving] = useState(false);
+
+    /* =========================================================
+       FORM CHANGE
+    ========================================================= */
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -37,12 +43,22 @@ const Builder = () => {
             ...prev,
             [name]: value,
         }));
+
+        setError("");
     };
+
+    /* =========================================================
+       ADD SKILL
+    ========================================================= */
 
     const addSkill = () => {
         const skill = skillInput.trim();
 
         if (!skill) return;
+
+        if (card.skills.length >= 8) {
+            return;
+        }
 
         if (card.skills.includes(skill)) {
             setSkillInput("");
@@ -57,6 +73,10 @@ const Builder = () => {
         setSkillInput("");
     };
 
+    /* =========================================================
+       REMOVE SKILL
+    ========================================================= */
+
     const removeSkill = (skillToRemove) => {
         setCard((prev) => ({
             ...prev,
@@ -66,9 +86,11 @@ const Builder = () => {
         }));
     };
 
-    const handleBackgroundUpload = (e) => {
-        const file = e.target.files?.[0];
+    /* =========================================================
+       IMAGE → BASE64
+    ========================================================= */
 
+    const handleImageUpload = (file, setter) => {
         if (!file) return;
 
         if (!file.type.startsWith("image/")) {
@@ -76,24 +98,67 @@ const Builder = () => {
             return;
         }
 
-        const imageUrl = URL.createObjectURL(file);
+        const reader = new FileReader();
 
-        setBackgroundImage(imageUrl);
+        reader.onload = () => {
+            setter(reader.result);
+        };
+
+        reader.onerror = () => {
+            alert("Unable to read the image.");
+        };
+
+        reader.readAsDataURL(file);
     };
+
+    /* =========================================================
+       PROFILE PICTURE
+    ========================================================= */
+
+    const handleAvatarUpload = (e) => {
+        const file = e.target.files?.[0];
+
+        handleImageUpload(file, setAvatarImage);
+
+        e.target.value = "";
+    };
+
+    /* =========================================================
+       BACKGROUND IMAGE
+    ========================================================= */
+
+    const handleBackgroundUpload = (e) => {
+        const file = e.target.files?.[0];
+
+        handleImageUpload(file, setBackgroundImage);
+
+        e.target.value = "";
+    };
+
+    /* =========================================================
+       DOWNLOAD CARD
+    ========================================================= */
 
     const downloadCard = async () => {
         if (!cardRef.current) return;
 
         try {
-            const canvas = await html2canvas(cardRef.current, {
-                useCORS: true,
-                scale: 2,
-                backgroundColor: null,
-            });
+            const canvas = await html2canvas(
+                cardRef.current,
+                {
+                    useCORS: true,
+                    scale: 2,
+                    backgroundColor: null,
+                }
+            );
 
-            const image = canvas.toDataURL("image/jpeg", 0.95);
+            const image = canvas.toDataURL(
+                "image/jpeg",
+                0.95
+            );
 
-            const link = document.createElement("a");
+            const link =
+                document.createElement("a");
 
             link.href = image;
             link.download = "instacard.jpg";
@@ -104,141 +169,476 @@ const Builder = () => {
 
             document.body.removeChild(link);
         } catch (error) {
-            console.error("Card download failed:", error);
+            console.error(
+                "Card download failed:",
+                error
+            );
 
-            alert("Unable to download the card. Please try again.");
+            alert(
+                "Unable to download the card. Please try again."
+            );
         }
     };
 
-    const saveAndPushToLobby = () => {
-        const cardData = {
-            ...card,
+    /* =========================================================
+       SAVE + PUBLISH
+    ========================================================= */
 
-            avatar: selectedAvatar,
+    const saveAndPushToLobby = async () => {
+        const token = localStorage.getItem("token");
 
-            backgroundImage,
+        if (!token) {
+            setError(
+                "Your session has expired. Please login again."
+            );
 
-            createdAt: new Date().toISOString(),
+            navigate("/login");
 
-            status: "published",
-        };
+            return;
+        }
 
-        localStorage.setItem(
-            "instacard",
-            JSON.stringify(cardData)
-        );
+        if (!card.name.trim()) {
+            setError("Please enter your name.");
+            return;
+        }
 
-        alert("Your InstaCard has been saved!");
+        try {
+            setSaving(true);
+            setError("");
+
+            const payload = {
+                name: card.name.trim(),
+                role: card.role.trim(),
+                bio: card.bio.trim(),
+                skills: card.skills,
+                github: card.github.trim(),
+                linkedin: card.linkedin.trim(),
+                portfolio: card.portfolio.trim(),
+
+                avatar: avatarImage
+                    ? {
+                          type: "image",
+                          url: avatarImage,
+                      }
+                    : {
+                          type: "letter",
+                          label: card.name
+                              .charAt(0)
+                              .toUpperCase(),
+                          color:
+                              fallbackAvatar.color,
+                      },
+
+                backgroundImage:
+                    backgroundImage || null,
+
+                status: "published",
+            };
+
+            const response = await fetch(
+                "http://localhost:5000/api/cards",
+                {
+                    method: "POST",
+
+                    headers: {
+                        "Content-Type":
+                            "application/json",
+
+                        Authorization:
+                            `Bearer ${token}`,
+                    },
+
+                    body: JSON.stringify(payload),
+                }
+            );
+
+            const data = await response.json();
+
+            console.log(
+                "Publish response:",
+                data
+            );
+
+            if (!response.ok) {
+                setError(
+                    data.message ||
+                        "Failed to publish card."
+                );
+
+                return;
+            }
+
+            if (!data.card) {
+                setError(
+                    "Card was saved but the server did not return the card."
+                );
+
+                return;
+            }
+
+            /* ================================================
+               SAVE LATEST CARD LOCALLY
+            ================================================= */
+
+            localStorage.setItem(
+                "instacard",
+                JSON.stringify(data.card)
+            );
+
+            /* ================================================
+               REDIRECT TEST
+            ================================================= */
+
+            console.log(
+                "========== REDIRECT TEST =========="
+            );
+
+            console.log(
+                "Card published:",
+                data.card
+            );
+
+            console.log(
+                "Navigating to lobby..."
+            );
+
+            alert(
+                "Card published successfully. Redirecting to Lobby..."
+            );
+
+            navigate("/lobby");
+
+        } catch (error) {
+            console.error(
+                "Publish card error:",
+                error
+            );
+
+            setError(
+                "Unable to connect to the server."
+            );
+        } finally {
+            setSaving(false);
+        }
     };
+
+    /* =========================================================
+       RENDER
+    ========================================================= */
+
     return (
         <div className={styles.builderPage}>
-            {/* HEADER */}
-            <header className={styles.header}>
-                <div>
-                    <p className={styles.eyebrow}>INSTACARD</p>
 
-                    <h1>Create your card</h1>
+            {/* =====================================================
+                HEADER
+            ===================================================== */}
+
+            <header className={styles.header}>
+
+                <div>
+
+                    <p className={styles.eyebrow}>
+                        INSTACARD
+                    </p>
+
+                    <h1>
+                        Create your card
+                    </h1>
 
                     <p className={styles.subtitle}>
-                        Build your professional identity and share it with
-                        the world.
+                        Build your professional identity
+                        and share it with the world.
                     </p>
+
                 </div>
+
             </header>
 
+
+            {/* =====================================================
+                BUILDER
+            ===================================================== */}
+
             <main className={styles.builderContainer}>
-                {/* =========================================
-            LEFT SIDE — FORM
-        ========================================= */}
 
-                <section className={styles.formSection}>
-                    <div className={styles.sectionHeader}>
-                        <h2>Card Details</h2>
+                {/* =================================================
+                    LEFT — FORM
+                ================================================= */}
 
-                        <span>Live Preview</span>
+                <section
+                    className={styles.formSection}
+                >
+
+                    <div
+                        className={
+                            styles.sectionHeader
+                        }
+                    >
+
+                        <h2>
+                            Card Details
+                        </h2>
+
+                        <span>
+                            Live Preview
+                        </span>
+
                     </div>
 
+
                     <div className={styles.form}>
-                        {/* AVATAR */}
-                        <div className={styles.controlSection}>
-                            <div className={styles.controlHeading}>
-                                <label>Choose your avatar</label>
 
-                                <span>Select one</span>
+                        {/* =================================================
+                            PROFILE PICTURE
+                        ================================================= */}
+
+                        <div
+                            className={
+                                styles.controlSection
+                            }
+                        >
+
+                            <div
+                                className={
+                                    styles.controlHeading
+                                }
+                            >
+
+                                <label>
+                                    Profile Picture
+                                </label>
+
+                                <span>
+                                    Optional
+                                </span>
+
                             </div>
 
-                            <div className={styles.avatarGrid}>
-                                {avatars.map((avatar) => (
-                                    <button
-                                        key={avatar.id}
-                                        type="button"
-                                        className={`${styles.avatarOption} ${selectedAvatar.id === avatar.id
-                                            ? styles.avatarSelected
-                                            : ""
-                                            }`}
-                                        onClick={() => setSelectedAvatar(avatar)}
-                                    >
-                                        <span
-                                            className={styles.avatarCircle}
-                                            style={{
-                                                backgroundColor: avatar.color,
-                                            }}
-                                        >
-                                            {avatar.label}
-                                        </span>
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-
-                        {/* BACKGROUND */}
-                        <div className={styles.controlSection}>
-                            <div className={styles.controlHeading}>
-                                <label>Card Background</label>
-
-                                <span>Upload an image</span>
-                            </div>
 
                             <input
-                                ref={fileInputRef}
+                                ref={avatarInputRef}
                                 type="file"
                                 accept="image/*"
-                                onChange={handleBackgroundUpload}
-                                className={styles.fileInput}
+                                onChange={
+                                    handleAvatarUpload
+                                }
+                                className={
+                                    styles.fileInput
+                                }
                             />
+
+
+                            <div
+                                className={
+                                    styles.profileUploadArea
+                                }
+                            >
+
+                                {avatarImage ? (
+                                    <img
+                                        src={
+                                            avatarImage
+                                        }
+                                        alt="Profile preview"
+                                        className={
+                                            styles.uploadedAvatar
+                                        }
+                                    />
+                                ) : (
+                                    <div
+                                        className={
+                                            styles.emptyAvatar
+                                        }
+                                    >
+                                        ?
+                                    </div>
+                                )}
+
+
+                                <div
+                                    className={
+                                        styles.profileUploadInfo
+                                    }
+                                >
+
+                                    <strong>
+                                        {avatarImage
+                                            ? "Profile picture added"
+                                            : "Add your profile picture"}
+                                    </strong>
+
+                                    <span>
+                                        Use a clear professional
+                                        photo.
+                                    </span>
+
+                                </div>
+
+                            </div>
+
 
                             <button
                                 type="button"
-                                className={styles.uploadButton}
-                                onClick={() => fileInputRef.current?.click()}
+                                className={
+                                    styles.uploadButton
+                                }
+                                onClick={() =>
+                                    avatarInputRef
+                                        .current
+                                        ?.click()
+                                }
                             >
-                                <span className={styles.uploadIcon}>↑</span>
+                                ↑
+
+                                {avatarImage
+                                    ? "Change Profile Picture"
+                                    : "Upload Profile Picture"}
+                            </button>
+
+
+                            {avatarImage && (
+                                <button
+                                    type="button"
+                                    className={
+                                        styles.removeBackground
+                                    }
+                                    onClick={() =>
+                                        setAvatarImage(
+                                            null
+                                        )
+                                    }
+                                >
+                                    Remove profile picture
+                                </button>
+                            )}
+
+                        </div>
+
+
+                        {/* =================================================
+                            BACKGROUND
+                        ================================================= */}
+
+                        <div
+                            className={
+                                styles.controlSection
+                            }
+                        >
+
+                            <div
+                                className={
+                                    styles.controlHeading
+                                }
+                            >
+
+                                <label>
+                                    Card Background
+                                </label>
+
+                                <span>
+                                    Optional
+                                </span>
+
+                            </div>
+
+
+                            <input
+                                ref={
+                                    backgroundInputRef
+                                }
+                                type="file"
+                                accept="image/*"
+                                onChange={
+                                    handleBackgroundUpload
+                                }
+                                className={
+                                    styles.fileInput
+                                }
+                            />
+
+
+                            <button
+                                type="button"
+                                className={
+                                    styles.uploadButton
+                                }
+                                onClick={() =>
+                                    backgroundInputRef
+                                        .current
+                                        ?.click()
+                                }
+                            >
+                                ↑
 
                                 {backgroundImage
                                     ? "Change Background Image"
                                     : "Upload Background Image"}
                             </button>
 
+
                             {backgroundImage && (
-                                <button
-                                    type="button"
-                                    className={styles.removeBackground}
-                                    onClick={() => setBackgroundImage(null)}
+                                <div
+                                    className={
+                                        styles.backgroundPreview
+                                    }
                                 >
-                                    Remove background
-                                </button>
+
+                                    <img
+                                        src={
+                                            backgroundImage
+                                        }
+                                        alt="Background preview"
+                                    />
+
+                                    <button
+                                        type="button"
+                                        onClick={() =>
+                                            setBackgroundImage(
+                                                null
+                                            )
+                                        }
+                                    >
+                                        Remove background
+                                    </button>
+
+                                </div>
                             )}
+
                         </div>
 
-                        {/* BASIC INFORMATION */}
-                        <div className={styles.controlSection}>
-                            <div className={styles.controlHeading}>
-                                <label>Basic Information</label>
+
+                        {/* =================================================
+                            BASIC INFORMATION
+                        ================================================= */}
+
+                        <div
+                            className={
+                                styles.controlSection
+                            }
+                        >
+
+                            <div
+                                className={
+                                    styles.controlHeading
+                                }
+                            >
+
+                                <label>
+                                    Basic Information
+                                </label>
+
                             </div>
 
-                            {/* NAME */}
-                            <div className={styles.field}>
-                                <label htmlFor="name">Name</label>
+
+                            <div
+                                className={
+                                    styles.field
+                                }
+                            >
+
+                                <label htmlFor="name">
+                                    Name
+                                </label>
 
                                 <input
                                     id="name"
@@ -246,13 +646,23 @@ const Builder = () => {
                                     type="text"
                                     placeholder="Rohith Lenka"
                                     value={card.name}
-                                    onChange={handleChange}
+                                    onChange={
+                                        handleChange
+                                    }
                                 />
+
                             </div>
 
-                            {/* ROLE */}
-                            <div className={styles.field}>
-                                <label htmlFor="role">Role</label>
+
+                            <div
+                                className={
+                                    styles.field
+                                }
+                            >
+
+                                <label htmlFor="role">
+                                    Role
+                                </label>
 
                                 <input
                                     id="role"
@@ -260,13 +670,23 @@ const Builder = () => {
                                     type="text"
                                     placeholder="Software Developer"
                                     value={card.role}
-                                    onChange={handleChange}
+                                    onChange={
+                                        handleChange
+                                    }
                                 />
+
                             </div>
 
-                            {/* BIO */}
-                            <div className={styles.field}>
-                                <label htmlFor="bio">Bio</label>
+
+                            <div
+                                className={
+                                    styles.field
+                                }
+                            >
+
+                                <label htmlFor="bio">
+                                    Bio
+                                </label>
 
                                 <textarea
                                     id="bio"
@@ -275,207 +695,465 @@ const Builder = () => {
                                     maxLength="180"
                                     placeholder="Tell people a little about yourself..."
                                     value={card.bio}
-                                    onChange={handleChange}
+                                    onChange={
+                                        handleChange
+                                    }
                                 />
 
-                                <span className={styles.characterCount}>
+                                <span
+                                    className={
+                                        styles.characterCount
+                                    }
+                                >
                                     {card.bio.length}/180
                                 </span>
+
                             </div>
+
                         </div>
 
-                        {/* SKILLS */}
-                        <div className={styles.controlSection}>
-                            <div className={styles.controlHeading}>
-                                <label>Skills</label>
 
-                                <span>{card.skills.length}/8</span>
+                        {/* =================================================
+                            SKILLS
+                        ================================================= */}
+
+                        <div
+                            className={
+                                styles.controlSection
+                            }
+                        >
+
+                            <div
+                                className={
+                                    styles.controlHeading
+                                }
+                            >
+
+                                <label>
+                                    Skills
+                                </label>
+
+                                <span>
+                                    {card.skills.length}/8
+                                </span>
+
                             </div>
 
-                            <div className={styles.skillInputWrapper}>
+
+                            <div
+                                className={
+                                    styles.skillInputWrapper
+                                }
+                            >
+
                                 <input
                                     type="text"
                                     placeholder="e.g. React"
-                                    value={skillInput}
+                                    value={
+                                        skillInput
+                                    }
                                     maxLength="20"
                                     onChange={(e) =>
-                                        setSkillInput(e.target.value)
+                                        setSkillInput(
+                                            e.target.value
+                                        )
                                     }
                                     onKeyDown={(e) => {
-                                        if (e.key === "Enter") {
+                                        if (
+                                            e.key ===
+                                            "Enter"
+                                        ) {
                                             e.preventDefault();
                                             addSkill();
                                         }
                                     }}
                                 />
 
+
                                 <button
                                     type="button"
-                                    onClick={addSkill}
-                                    disabled={card.skills.length >= 8}
-                                    className={styles.addSkillButton}
+                                    onClick={
+                                        addSkill
+                                    }
+                                    disabled={
+                                        card.skills
+                                            .length >=
+                                        8
+                                    }
+                                    className={
+                                        styles.addSkillButton
+                                    }
                                 >
                                     Add
                                 </button>
+
                             </div>
 
-                            <div className={styles.skillList}>
-                                {card.skills.map((skill) => (
-                                    <div
-                                        className={styles.skillTag}
-                                        key={skill}
-                                    >
-                                        <span>{skill}</span>
 
-                                        <button
-                                            type="button"
-                                            onClick={() => removeSkill(skill)}
-                                            aria-label={`Remove ${skill}`}
+                            <div
+                                className={
+                                    styles.skillList
+                                }
+                            >
+
+                                {card.skills.map(
+                                    (skill) => (
+                                        <div
+                                            className={
+                                                styles.skillTag
+                                            }
+                                            key={
+                                                skill
+                                            }
                                         >
-                                            ×
-                                        </button>
-                                    </div>
-                                ))}
+
+                                            <span>
+                                                {skill}
+                                            </span>
+
+                                            <button
+                                                type="button"
+                                                onClick={() =>
+                                                    removeSkill(
+                                                        skill
+                                                    )
+                                                }
+                                            >
+                                                ×
+                                            </button>
+
+                                        </div>
+                                    )
+                                )}
+
                             </div>
+
                         </div>
 
-                        {/* SOCIAL LINKS */}
-                        <div className={styles.controlSection}>
-                            <div className={styles.controlHeading}>
-                                <label>Social Links</label>
 
-                                <span>Optional</span>
+                        {/* =================================================
+                            SOCIAL LINKS
+                        ================================================= */}
+
+                        <div
+                            className={
+                                styles.controlSection
+                            }
+                        >
+
+                            <div
+                                className={
+                                    styles.controlHeading
+                                }
+                            >
+
+                                <label>
+                                    Social Links
+                                </label>
+
+                                <span>
+                                    Optional
+                                </span>
+
                             </div>
 
-                            <div className={styles.field}>
-                                <label htmlFor="github">GitHub</label>
+
+                            <div
+                                className={
+                                    styles.field
+                                }
+                            >
+
+                                <label htmlFor="github">
+                                    GitHub
+                                </label>
 
                                 <input
                                     id="github"
                                     name="github"
                                     type="url"
                                     placeholder="https://github.com/username"
-                                    value={card.github}
-                                    onChange={handleChange}
+                                    value={
+                                        card.github
+                                    }
+                                    onChange={
+                                        handleChange
+                                    }
                                 />
+
                             </div>
 
-                            <div className={styles.field}>
-                                <label htmlFor="linkedin">LinkedIn</label>
+
+                            <div
+                                className={
+                                    styles.field
+                                }
+                            >
+
+                                <label htmlFor="linkedin">
+                                    LinkedIn
+                                </label>
 
                                 <input
                                     id="linkedin"
                                     name="linkedin"
                                     type="url"
                                     placeholder="https://linkedin.com/in/username"
-                                    value={card.linkedin}
-                                    onChange={handleChange}
+                                    value={
+                                        card.linkedin
+                                    }
+                                    onChange={
+                                        handleChange
+                                    }
                                 />
+
                             </div>
 
-                            <div className={styles.field}>
-                                <label htmlFor="portfolio">Portfolio</label>
+
+                            <div
+                                className={
+                                    styles.field
+                                }
+                            >
+
+                                <label htmlFor="portfolio">
+                                    Portfolio
+                                </label>
 
                                 <input
                                     id="portfolio"
                                     name="portfolio"
                                     type="url"
                                     placeholder="https://yourportfolio.com"
-                                    value={card.portfolio}
-                                    onChange={handleChange}
+                                    value={
+                                        card.portfolio
+                                    }
+                                    onChange={
+                                        handleChange
+                                    }
                                 />
+
                             </div>
+
                         </div>
+
+
+                        {/* ERROR */}
+
+                        {error && (
+                            <p
+                                className={
+                                    styles.errorMessage
+                                }
+                            >
+                                {error}
+                            </p>
+                        )}
+
                     </div>
+
                 </section>
 
-                {/* =========================================
-            RIGHT SIDE — PREVIEW
-        ========================================= */}
 
-                <section className={styles.previewSection}>
-                    <div className={styles.previewHeader}>
+                {/* =================================================
+                    RIGHT — PREVIEW
+                ================================================= */}
+
+                <section
+                    className={
+                        styles.previewSection
+                    }
+                >
+
+                    <div
+                        className={
+                            styles.previewHeader
+                        }
+                    >
+
                         <div>
-                            <p>PREVIEW</p>
+
+                            <p>
+                                PREVIEW
+                            </p>
 
                             <span>
                                 Your card updates automatically
                             </span>
+
                         </div>
+
                     </div>
 
-                    <div className={styles.previewArea}>
+
+                    <div
+                        className={
+                            styles.previewArea
+                        }
+                    >
+
+                        {/* =================================================
+                            PROFILE CARD
+                        ================================================= */}
+
                         <div
                             ref={cardRef}
-                            className={styles.profileCard}
+                            className={
+                                styles.profileCard
+                            }
                             style={
                                 backgroundImage
                                     ? {
-                                        backgroundImage: `url(${backgroundImage})`,
-                                    }
+                                          backgroundImage:
+                                              `url(${backgroundImage})`,
+                                      }
                                     : undefined
                             }
                         >
-                            {/* BACKGROUND OVERLAY */}
-                            <div className={styles.cardOverlay}></div>
 
-                            {/* CARD CONTENT */}
-                            <div className={styles.cardInner}>
+                            <div
+                                className={
+                                    styles.cardOverlay
+                                }
+                            />
 
-                                {/* AVATAR */}
-                                <div className={styles.cardAvatar}>
-                                    <span
-                                        style={{
-                                            backgroundColor: selectedAvatar.color,
-                                        }}
-                                    >
-                                        {selectedAvatar.label}
-                                    </span>
+
+                            <div
+                                className={
+                                    styles.cardInner
+                                }
+                            >
+
+                                {/* PROFILE IMAGE */}
+
+                                <div
+                                    className={
+                                        styles.cardAvatar
+                                    }
+                                >
+
+                                    {avatarImage ? (
+                                        <img
+                                            src={
+                                                avatarImage
+                                            }
+                                            alt={
+                                                card.name ||
+                                                "Profile"
+                                            }
+                                        />
+                                    ) : (
+                                        <span
+                                            style={{
+                                                backgroundColor:
+                                                    fallbackAvatar.color,
+                                            }}
+                                        >
+                                            {card.name
+                                                ? card.name
+                                                      .charAt(
+                                                          0
+                                                      )
+                                                      .toUpperCase()
+                                                : "R"}
+                                        </span>
+                                    )}
+
                                 </div>
 
-                                {/* MAIN CONTENT */}
-                                <div className={styles.cardMain}>
 
-                                    <div className={styles.identity}>
+                                {/* MAIN CONTENT */}
+
+                                <div
+                                    className={
+                                        styles.cardMain
+                                    }
+                                >
+
+                                    <div
+                                        className={
+                                            styles.identity
+                                        }
+                                    >
+
                                         <h2>
-                                            {card.name || "Your Name"}
+                                            {card.name ||
+                                                "Your Name"}
                                         </h2>
 
                                         <p>
-                                            {card.role || "Your Role"}
+                                            {card.role ||
+                                                "Your Role"}
                                         </p>
 
                                         <span>
                                             {card.bio ||
                                                 "Your professional bio will appear here."}
                                         </span>
+
                                     </div>
 
-                                    {/* SKILLS */}
-                                    <div className={styles.cardSkills}>
-                                        {card.skills.length > 0 ? (
-                                            card.skills.map((skill) => (
-                                                <span key={skill}>
-                                                    {skill}
-                                                </span>
-                                            ))
+
+                                    <div
+                                        className={
+                                            styles.cardSkills
+                                        }
+                                    >
+
+                                        {card.skills
+                                            .length >
+                                        0 ? (
+                                            card.skills.map(
+                                                (
+                                                    skill
+                                                ) => (
+                                                    <span
+                                                        key={
+                                                            skill
+                                                        }
+                                                    >
+                                                        {
+                                                            skill
+                                                        }
+                                                    </span>
+                                                )
+                                            )
                                         ) : (
                                             <>
-                                                <span>React</span>
-                                                <span>Node.js</span>
-                                                <span>MongoDB</span>
+                                                <span>
+                                                    React
+                                                </span>
+
+                                                <span>
+                                                    Node.js
+                                                </span>
+
+                                                <span>
+                                                    MongoDB
+                                                </span>
                                             </>
                                         )}
+
                                     </div>
 
-                                    {/* FOOTER */}
-                                    <div className={styles.cardFooter}>
 
-                                        <div className={styles.socialLinks}>
+                                    <div
+                                        className={
+                                            styles.cardFooter
+                                        }
+                                    >
+
+                                        <div
+                                            className={
+                                                styles.socialLinks
+                                            }
+                                        >
 
                                             {card.github && (
                                                 <a
-                                                    href={card.github}
+                                                    href={
+                                                        card.github
+                                                    }
                                                     target="_blank"
                                                     rel="noreferrer"
                                                 >
@@ -485,7 +1163,9 @@ const Builder = () => {
 
                                             {card.linkedin && (
                                                 <a
-                                                    href={card.linkedin}
+                                                    href={
+                                                        card.linkedin
+                                                    }
                                                     target="_blank"
                                                     rel="noreferrer"
                                                 >
@@ -495,7 +1175,9 @@ const Builder = () => {
 
                                             {card.portfolio && (
                                                 <a
-                                                    href={card.portfolio}
+                                                    href={
+                                                        card.portfolio
+                                                    }
                                                     target="_blank"
                                                     rel="noreferrer"
                                                 >
@@ -507,49 +1189,87 @@ const Builder = () => {
                                                 !card.linkedin &&
                                                 !card.portfolio && (
                                                     <>
-                                                        <span>GitHub</span>
-                                                        <span>LinkedIn</span>
-                                                        <span>Portfolio</span>
+                                                        <span>
+                                                            GitHub
+                                                        </span>
+
+                                                        <span>
+                                                            LinkedIn
+                                                        </span>
+
+                                                        <span>
+                                                            Portfolio
+                                                        </span>
                                                     </>
                                                 )}
 
                                         </div>
 
+
                                         <button
                                             type="button"
-                                            className={styles.messageButton}
+                                            className={
+                                                styles.messageButton
+                                            }
                                         >
                                             Message
                                         </button>
 
                                     </div>
+
                                 </div>
+
                             </div>
+
                         </div>
 
-                        {/* ACTION BUTTONS */}
-                        <div className={styles.cardActions}>
+
+                        {/* =================================================
+                            ACTION BUTTONS
+                        ================================================= */}
+
+                        <div
+                            className={
+                                styles.cardActions
+                            }
+                        >
 
                             <button
                                 type="button"
-                                className={styles.downloadButton}
-                                onClick={downloadCard}
+                                className={
+                                    styles.downloadButton
+                                }
+                                onClick={
+                                    downloadCard
+                                }
                             >
                                 ↓ Download JPG
                             </button>
 
+
                             <button
                                 type="button"
-                                className={styles.publishButton}
-                                onClick={saveAndPushToLobby}
+                                className={
+                                    styles.publishButton
+                                }
+                                onClick={
+                                    saveAndPushToLobby
+                                }
+                                disabled={saving}
                             >
-                                ✓ Save & Push to Lobby
+                                {saving
+                                    ? "Publishing..."
+                                    : "✓ Save & Push to Lobby"}
                             </button>
 
                         </div>
+
                     </div>
+
                 </section>
+
             </main>
+
         </div>
     );
 };

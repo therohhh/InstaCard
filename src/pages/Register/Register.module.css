@@ -1,0 +1,647 @@
+/* =========================================================
+   REGISTER PAGE
+========================================================= */
+
+.registerPage {
+  position: relative;
+
+  width: 100%;
+  min-height: 100vh;
+
+  box-sizing: border-box;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  padding: 30px;
+
+  overflow: hidden;
+
+  background:
+    radial-gradient(
+      circle at 20% 20%,
+      #222222 0%,
+      #111111 40%,
+      #000000 100%
+    );
+
+  color: #ffffff;
+}
+
+
+/* =========================================================
+   3D SCENE
+========================================================= */
+
+.scene {
+  position: absolute;
+
+  inset: 0;
+
+  pointer-events: none;
+
+  perspective: 1000px;
+}
+
+
+/* =========================================================
+   FLOATING CARDS
+========================================================= */
+
+.floatingCard {
+  position: absolute;
+
+  width: 190px;
+
+  padding: 15px;
+
+  box-sizing: border-box;
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 12px;
+
+  border: 1px solid rgba(0, 0, 0, 0.8);
+
+  border-radius: 14px;
+
+  background: rgba(0, 0, 0, 0.68);
+
+  backdrop-filter: blur(12px);
+
+  box-shadow:
+    0 25px 60px rgba(0, 0, 0, 0.45);
+
+  color: #ffffff;
+}
+
+.floatingCard strong {
+  display: block;
+
+  margin-bottom: 4px;
+
+  font-size: 12px;
+}
+
+.floatingCard span {
+  display: block;
+
+  color: #aaa;
+
+  font-size: 9px;
+}
+
+
+/* =========================================================
+   AVATAR
+========================================================= */
+
+.miniAvatar {
+  width: 38px;
+
+  height: 38px;
+
+  flex-shrink: 0;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 50%;
+
+  background: #ffffff;
+
+  color: #000000;
+
+  font-size: 13px;
+
+  font-weight: 700;
+}
+
+
+/* =========================================================
+   CARD POSITIONS
+========================================================= */
+
+.cardOne {
+  top: 16%;
+  left: 12%;
+
+  transform:
+    rotateY(18deg)
+    rotateZ(-7deg);
+
+  animation:
+    floatOne 6s ease-in-out infinite;
+}
+
+.cardTwo {
+  top: 22%;
+  right: 10%;
+
+  transform:
+    rotateY(-18deg)
+    rotateZ(6deg);
+
+  animation:
+    floatTwo 7s ease-in-out infinite;
+}
+
+.cardThree {
+  bottom: 15%;
+  left: 16%;
+
+  transform:
+    rotateY(15deg)
+    rotateZ(5deg);
+
+  animation:
+    floatThree 8s ease-in-out infinite;
+}
+
+
+/* =========================================================
+   FLOAT ANIMATIONS
+========================================================= */
+
+@keyframes floatOne {
+
+  0%,
+  100% {
+    transform:
+      translateY(0)
+      rotateY(18deg)
+      rotateZ(-7deg);
+  }
+
+  50% {
+    transform:
+      translateY(-18px)
+      rotateY(24deg)
+      rotateZ(-4deg);
+  }
+}
+
+@keyframes floatTwo {
+
+  0%,
+  100% {
+    transform:
+      translateY(0)
+      rotateY(-18deg)
+      rotateZ(6deg);
+  }
+
+  50% {
+    transform:
+      translateY(22px)
+      rotateY(-24deg)
+      rotateZ(3deg);
+  }
+}
+
+@keyframes floatThree {
+
+  0%,
+  100% {
+    transform:
+      translateY(0)
+      rotateY(15deg)
+      rotateZ(5deg);
+  }
+
+  50% {
+    transform:
+      translateY(-20px)
+      rotateY(20deg)
+      rotateZ(8deg);
+  }
+}
+
+
+/* =========================================================
+   NODES
+========================================================= */
+
+.node {
+  position: absolute;
+
+  width: 8px;
+
+  height: 8px;
+
+  border-radius: 50%;
+
+  background: #ffffff;
+
+  box-shadow:
+    0 0 0 6px rgba(255, 255, 255, 0.08);
+
+  animation:
+    nodePulse 3s ease-in-out infinite;
+}
+
+.node1 {
+  top: 28%;
+  left: 30%;
+}
+
+.node2 {
+  top: 35%;
+  right: 28%;
+}
+
+.node3 {
+  bottom: 28%;
+  right: 18%;
+}
+
+.node4 {
+  bottom: 18%;
+  left: 38%;
+}
+
+@keyframes nodePulse {
+
+  0%,
+  100% {
+    transform: scale(1);
+
+    opacity: 0.5;
+  }
+
+  50% {
+    transform: scale(1.6);
+
+    opacity: 1;
+  }
+}
+
+
+/* =========================================================
+   CONNECTIONS
+========================================================= */
+
+.connection {
+  position: absolute;
+
+  height: 1px;
+
+  transform-origin: left center;
+
+  background:
+    linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0.25),
+      rgba(255, 255, 255, 0)
+    );
+
+  opacity: 0.5;
+}
+
+.line1 {
+  width: 280px;
+
+  top: 29%;
+  left: 20%;
+
+  transform: rotate(20deg);
+}
+
+.line2 {
+  width: 250px;
+
+  top: 38%;
+  right: 18%;
+
+  transform: rotate(-25deg);
+}
+
+.line3 {
+  width: 320px;
+
+  bottom: 25%;
+  left: 28%;
+
+  transform: rotate(-12deg);
+}
+
+
+/* =========================================================
+   REGISTER CARD
+========================================================= */
+
+.registerCard {
+  position: relative;
+
+  z-index: 10;
+
+  width: 100%;
+
+  max-width: 430px;
+
+  padding: 38px 40px;
+
+  box-sizing: border-box;
+
+  background: rgba(0, 0, 0, 0.94);
+
+  border: 1px solid rgba(255, 255, 255, 0.15);
+
+  border-radius: 22px;
+
+  box-shadow:
+    0 30px 80px rgba(0, 0, 0, 0.6),
+    0 5px 15px rgba(0, 0, 0, 0.3);
+
+  backdrop-filter: blur(20px);
+}
+
+
+/* =========================================================
+   LOGO
+========================================================= */
+
+.logo {
+  margin-bottom: 28px;
+
+  font-size: 13px;
+
+  font-weight: 800;
+
+  letter-spacing: 2px;
+
+  color: #ffffff;
+}
+
+
+/* =========================================================
+   HEADING
+========================================================= */
+
+.registerCard h1 {
+  margin: 0;
+
+  font-size: 30px;
+
+  letter-spacing: -1px;
+
+  color: #ffffff;
+}
+
+.subtitle {
+  margin: 9px 0 25px;
+
+  color: #999999;
+
+  font-size: 14px;
+}
+
+
+/* =========================================================
+   FORM
+========================================================= */
+
+.form {
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 17px;
+}
+
+
+/* =========================================================
+   FIELD
+========================================================= */
+
+.field {
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 7px;
+}
+
+.field label {
+  font-size: 12px;
+
+  font-weight: 600;
+
+  color: #cccccc;
+}
+
+
+/* =========================================================
+   INPUT
+========================================================= */
+
+.field input {
+  width: 100%;
+
+  box-sizing: border-box;
+
+  padding: 12px 14px;
+
+  border: 1px solid #333333;
+
+  border-radius: 10px;
+
+  outline: none;
+
+  background: #111111;
+
+  color: #ffffff;
+
+  font-size: 13px;
+
+  transition:
+    border-color 0.2s ease,
+    background 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.field input::placeholder {
+  color: #666666;
+}
+
+.field input:focus {
+  border-color: #ffffff;
+
+  background: #080808;
+
+  box-shadow:
+    0 0 0 3px rgba(255, 255, 255, 0.08);
+}
+
+
+/* =========================================================
+   PASSWORD
+========================================================= */
+
+.passwordWrapper {
+  position: relative;
+}
+
+.passwordWrapper input {
+  padding-right: 60px;
+}
+
+.showPassword {
+  position: absolute;
+
+  right: 12px;
+
+  top: 50%;
+
+  transform: translateY(-50%);
+
+  border: none;
+
+  background: none;
+
+  color: #999999;
+
+  font-size: 11px;
+
+  cursor: pointer;
+}
+
+.showPassword:hover {
+  color: #ffffff;
+}
+
+
+/* =========================================================
+   REGISTER BUTTON
+========================================================= */
+
+.registerButton {
+  width: 100%;
+
+  margin-top: 5px;
+
+  padding: 13px;
+
+  border: none;
+
+  border-radius: 10px;
+
+  background: #ffffff;
+
+  color: #000000;
+
+  font-size: 13px;
+
+  font-weight: 700;
+
+  cursor: pointer;
+
+  transition:
+    background 0.2s ease,
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.registerButton:hover {
+  background: #dddddd;
+
+  transform: translateY(-2px);
+
+  box-shadow:
+    0 8px 20px rgba(255, 255, 255, 0.12);
+}
+
+
+/* =========================================================
+   LOGIN LINK
+========================================================= */
+
+.loginText {
+  margin: 22px 0 0;
+
+  text-align: center;
+
+  color: #777777;
+
+  font-size: 12px;
+}
+
+.loginText a {
+  color: #ffffff;
+
+  font-weight: 700;
+
+  text-decoration: none;
+}
+
+.loginText a:hover {
+  color: #cccccc;
+
+  text-decoration: underline;
+}
+
+
+/* =========================================================
+   TABLET
+========================================================= */
+
+@media (max-width: 700px) {
+
+  .registerPage {
+    padding: 20px;
+  }
+
+  .registerCard {
+    max-width: 430px;
+
+    padding: 30px 24px;
+  }
+
+  .cardOne {
+    left: -70px;
+
+    top: 10%;
+  }
+
+  .cardTwo {
+    right: -70px;
+
+    top: 18%;
+  }
+
+  .cardThree {
+    left: -60px;
+
+    bottom: 10%;
+  }
+
+  .connection {
+    opacity: 0.25;
+  }
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 500px) {
+
+  .registerCard {
+    padding: 28px 22px;
+  }
+
+  .registerCard h1 {
+    font-size: 27px;
+  }
+
+  .floatingCard {
+    transform: scale(0.8);
+  }
+}
