@@ -134,17 +134,6 @@ const Lobby = () => {
         return null;
     };
 
-    const getCardBackground = (card) => {
-        if (
-            card?.backgroundImage &&
-            typeof card.backgroundImage === "string"
-        ) {
-            return card.backgroundImage;
-        }
-
-        return null;
-    };
-
     const otherCards = cards.filter(
         (card) =>
             !myCard ||
