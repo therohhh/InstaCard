@@ -11,29 +11,16 @@ import authMiddleware from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
-router.post(
-    "/",
-    authMiddleware,
-    saveCard
-);
+// Create or update the logged-in user's card
+router.post("/", authMiddleware, saveCard);
 
-router.get(
-    "/",
-    authMiddleware,
-    getPublishedCards
-);
+// Get all published cards
+router.get("/", authMiddleware, getPublishedCards);
 
+// Get the logged-in user's own card
+router.get("/me", authMiddleware, getMyCard);
 
-router.get(
-  "/me",
-  authMiddleware,
-  getMyCard
-);
-
-router.get(
-    "/:id",
-    authMiddleware,
-    getCardById
-);
+// Get a specific published card
+router.get("/:id", authMiddleware, getCardById);
 
 export default router;

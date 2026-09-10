@@ -1,0 +1,363 @@
+.profileCard {
+    position: relative;
+
+    width: min(100%, 720px);
+
+    min-height: 290px;
+
+    box-sizing: border-box;
+
+    background-color: #242424;
+
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+
+    border-radius: 18px;
+
+    overflow: hidden;
+
+    border: 1px solid rgba(255, 255, 255, 0.15);
+
+    box-shadow:
+        0 30px 60px rgba(0, 0, 0, 0.22),
+        0 8px 15px rgba(0, 0, 0, 0.08);
+
+    transition:
+        transform 0.3s ease,
+        box-shadow 0.3s ease;
+}
+
+.profileCard:hover {
+    transform: translateY(-5px);
+
+    box-shadow:
+        0 35px 70px rgba(0, 0, 0, 0.25);
+}
+
+
+/* =========================================================
+   OVERLAY
+========================================================= */
+
+.cardOverlay {
+    position: absolute;
+
+    inset: 0;
+
+    background:
+        linear-gradient(
+            90deg,
+            rgba(0, 0, 0, 0.85) 0%,
+            rgba(0, 0, 0, 0.62) 48%,
+            rgba(0, 0, 0, 0.35) 100%
+        ),
+        linear-gradient(
+            180deg,
+            rgba(0, 0, 0, 0) 60%,
+            rgba(0, 0, 0, 0.55) 100%
+        );
+}
+
+
+/* =========================================================
+   INNER
+========================================================= */
+
+.cardInner {
+    position: relative;
+
+    z-index: 2;
+
+    min-height: 290px;
+
+    box-sizing: border-box;
+
+    display: flex;
+
+    gap: 20px;
+
+    padding: 30px;
+}
+
+
+/* =========================================================
+   AVATAR
+========================================================= */
+
+.cardAvatar {
+    flex-shrink: 0;
+}
+
+.cardAvatar span,
+.cardAvatar img {
+    width: 72px;
+
+    height: 72px;
+
+    display: block;
+
+    border-radius: 50%;
+
+    border: 3px solid rgba(255, 255, 255, 0.9);
+
+    box-shadow:
+        0 8px 25px rgba(0, 0, 0, 0.3);
+
+    box-sizing: border-box;
+}
+
+.cardAvatar span {
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    background: #1f2937;
+
+    color: white;
+
+    font-size: 22px;
+
+    font-weight: 700;
+}
+
+.cardAvatar img {
+    object-fit: cover;
+}
+
+
+/* =========================================================
+   MAIN
+========================================================= */
+
+.cardMain {
+    flex: 1;
+
+    min-width: 0;
+
+    display: flex;
+
+    flex-direction: column;
+
+    justify-content: space-between;
+}
+
+
+/* =========================================================
+   IDENTITY
+========================================================= */
+
+.identity h2 {
+    margin: 0;
+
+    color: white;
+
+    font-size: 26px;
+
+    letter-spacing: -0.5px;
+}
+
+.identity p {
+    margin: 5px 0 10px;
+
+    color: rgba(255, 255, 255, 0.85);
+
+    font-size: 14px;
+
+    font-weight: 600;
+}
+
+.identity > span {
+    display: block;
+
+    max-width: 480px;
+
+    color: rgba(255, 255, 255, 0.72);
+
+    font-size: 12px;
+
+    line-height: 1.6;
+}
+
+
+/* =========================================================
+   SKILLS
+========================================================= */
+
+.cardSkills {
+    display: flex;
+
+    flex-wrap: wrap;
+
+    gap: 7px;
+
+    margin: 18px 0;
+}
+
+.cardSkills span {
+    padding: 6px 10px;
+
+    border: 1px solid rgba(255, 255, 255, 0.25);
+
+    border-radius: 999px;
+
+    background: rgba(255, 255, 255, 0.1);
+
+    color: white;
+
+    font-size: 10px;
+
+    font-weight: 600;
+
+    backdrop-filter: blur(8px);
+}
+
+
+/* =========================================================
+   FOOTER
+========================================================= */
+
+.cardFooter {
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    gap: 15px;
+
+    padding-top: 15px;
+
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+
+/* =========================================================
+   SOCIAL LINKS
+========================================================= */
+
+.socialLinks {
+    display: flex;
+
+    flex-wrap: wrap;
+
+    gap: 12px;
+}
+
+.socialLinks a,
+.socialLinks span {
+    color: rgba(255, 255, 255, 0.8);
+
+    text-decoration: none;
+
+    font-size: 10px;
+
+    font-weight: 600;
+}
+
+.socialLinks a:hover {
+    color: white;
+}
+
+
+/* =========================================================
+   MESSAGE
+========================================================= */
+
+.messageButton {
+    flex-shrink: 0;
+
+    border: 1px solid rgba(255, 255, 255, 0.35);
+
+    border-radius: 9px;
+
+    padding: 9px 15px;
+
+    background: rgba(255, 255, 255, 0.16);
+
+    color: white;
+
+    font-size: 11px;
+
+    font-weight: 600;
+
+    cursor: pointer;
+
+    backdrop-filter: blur(10px);
+
+    transition:
+        background 0.2s ease,
+        transform 0.2s ease;
+}
+
+.messageButton:hover {
+    background: rgba(255, 255, 255, 0.25);
+
+    transform: translateY(-2px);
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 650px) {
+    .profileCard {
+        min-height: 360px;
+    }
+
+    .cardInner {
+        min-height: 360px;
+
+        flex-direction: column;
+
+        padding: 22px;
+    }
+
+    .cardAvatar span,
+    .cardAvatar img {
+        width: 60px;
+
+        height: 60px;
+    }
+
+    .cardAvatar span {
+        font-size: 18px;
+    }
+
+    .identity h2 {
+        font-size: 22px;
+    }
+
+    .cardFooter {
+        align-items: flex-start;
+
+        flex-direction: column;
+    }
+
+    .messageButton {
+        width: 100%;
+    }
+}
+
+
+/* =========================================================
+   SMALL MOBILE
+========================================================= */
+
+@media (max-width: 450px) {
+    .profileCard {
+        min-height: 390px;
+    }
+
+    .cardInner {
+        min-height: 390px;
+
+        padding: 20px;
+    }
+
+    .cardSkills {
+        margin: 12px 0;
+    }
+}

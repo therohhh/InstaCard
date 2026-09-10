@@ -217,17 +217,17 @@ const Builder = () => {
 
                 avatar: avatarImage
                     ? {
-                          type: "image",
-                          url: avatarImage,
-                      }
+                        type: "image",
+                        url: avatarImage,
+                    }
                     : {
-                          type: "letter",
-                          label: card.name
-                              .charAt(0)
-                              .toUpperCase(),
-                          color:
-                              fallbackAvatar.color,
-                      },
+                        type: "letter",
+                        label: card.name
+                            .charAt(0)
+                            .toUpperCase(),
+                        color:
+                            fallbackAvatar.color,
+                    },
 
                 backgroundImage:
                     backgroundImage || null,
@@ -262,7 +262,7 @@ const Builder = () => {
             if (!response.ok) {
                 setError(
                     data.message ||
-                        "Failed to publish card."
+                    "Failed to publish card."
                 );
 
                 return;
@@ -285,29 +285,10 @@ const Builder = () => {
                 JSON.stringify(data.card)
             );
 
-            /* ================================================
-               REDIRECT TEST
-            ================================================= */
-
-            console.log(
-                "========== REDIRECT TEST =========="
-            );
-
-            console.log(
-                "Card published:",
-                data.card
-            );
-
-            console.log(
-                "Navigating to lobby..."
-            );
-
-            alert(
-                "Card published successfully. Redirecting to Lobby..."
-            );
-
-            navigate("/lobby");
-
+            navigate("/lobby", {
+                replace: true,
+            });
+            
         } catch (error) {
             console.error(
                 "Publish card error:",
@@ -1004,9 +985,9 @@ const Builder = () => {
                             style={
                                 backgroundImage
                                     ? {
-                                          backgroundImage:
-                                              `url(${backgroundImage})`,
-                                      }
+                                        backgroundImage:
+                                            `url(${backgroundImage})`,
+                                    }
                                     : undefined
                             }
                         >
@@ -1051,10 +1032,10 @@ const Builder = () => {
                                         >
                                             {card.name
                                                 ? card.name
-                                                      .charAt(
-                                                          0
-                                                      )
-                                                      .toUpperCase()
+                                                    .charAt(
+                                                        0
+                                                    )
+                                                    .toUpperCase()
                                                 : "R"}
                                         </span>
                                     )}
@@ -1102,7 +1083,7 @@ const Builder = () => {
 
                                         {card.skills
                                             .length >
-                                        0 ? (
+                                            0 ? (
                                             card.skills.map(
                                                 (
                                                     skill

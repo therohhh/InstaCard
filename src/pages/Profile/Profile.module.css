@@ -358,3 +358,34 @@
         line-height: 1.5;
     }
 }
+.cardWrapper {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    margin: 50px 0;
+}
+
+.cardWrapper > div {
+    width: min(100%, 720px);
+}
+
+.profileInfo {
+    width: 100%;
+    max-width: 720px;
+    margin: 0 auto 40px;
+
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+}
+
+@media (max-width: 700px) {
+    .profileInfo {
+        grid-template-columns: 1fr;
+        gap: 25px;
+    }
+
+    .cardWrapper {
+        margin: 30px 0;
+    }
+}

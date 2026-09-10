@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+
 import styles from "./Lobby.module.css";
+import InstaCard from "../../components/card/InstaCard";
 
 const Lobby = () => {
     const navigate = useNavigate();
@@ -149,7 +151,6 @@ const Lobby = () => {
             className={styles.lobby}
             onMouseMove={handleMouseMove}
         >
-
             {/* =====================================================
                 AMBIENT 3D
             ===================================================== */}
@@ -174,21 +175,17 @@ const Lobby = () => {
 
             <div className={styles.glowOrb} />
 
-
             {/* =====================================================
                 NAVIGATION
             ===================================================== */}
 
             <nav className={styles.nav}>
-
                 <div className={styles.brand}>
                     INSTACARD
                     <span>®</span>
                 </div>
 
-
                 <div className={styles.navCenter}>
-
                     <span>
                         LOBBY
                     </span>
@@ -196,18 +193,14 @@ const Lobby = () => {
                     <span>
                         NETWORK
                     </span>
-
                 </div>
 
-
                 <div className={styles.navRight}>
-
                     <span>
                         {myCard
                             ? myCard.name
                             : "WELCOME"}
                     </span>
-
 
                     <button
                         onClick={() =>
@@ -224,18 +217,14 @@ const Lobby = () => {
                             ↗
                         </span>
                     </button>
-
                 </div>
-
             </nav>
-
 
             {/* =====================================================
                 HERO
             ===================================================== */}
 
             <section className={styles.hero}>
-
                 <div
                     className={
                         styles.heroMeta
@@ -252,17 +241,14 @@ const Lobby = () => {
                     </span>
                 </div>
 
-
                 <div
                     className={
                         styles.heroTitle
                     }
                 >
-
                     <div>
                         YOUR
                     </div>
-
 
                     <div
                         className={
@@ -271,7 +257,6 @@ const Lobby = () => {
                     >
                         NETWORK
                     </div>
-
 
                     <div
                         className={
@@ -286,9 +271,7 @@ const Lobby = () => {
                             SPACE.
                         </span>
                     </div>
-
                 </div>
-
 
                 <p
                     className={
@@ -301,7 +284,6 @@ const Lobby = () => {
                     <br />
                     Create connections.
                 </p>
-
 
                 <div
                     className={
@@ -316,9 +298,7 @@ const Lobby = () => {
                         ↓
                     </span>
                 </div>
-
             </section>
-
 
             {/* =====================================================
                 YOUR CARD
@@ -329,7 +309,6 @@ const Lobby = () => {
                     styles.myCardSection
                 }
             >
-
                 <div
                     className={
                         styles.sectionLabel
@@ -344,9 +323,7 @@ const Lobby = () => {
                     </span>
                 </div>
 
-
                 {loading ? (
-
                     <div
                         className={
                             styles.loading
@@ -354,159 +331,30 @@ const Lobby = () => {
                     >
                         LOADING YOUR IDENTITY
                     </div>
-
                 ) : myCard ? (
-
                     <div
                         className={
                             styles.myCardLayout
                         }
                     >
-
                         {/* =========================================
                             CARD
                         ========================================= */}
 
                         <div
                             className={
-                                styles.identityCard
+                                styles.myCardPreview
                             }
                             onClick={() =>
                                 navigate(
                                     `/profile/${myCard._id}`
                                 )
                             }
-                            style={
-                                getCardBackground(
-                                    myCard
-                                )
-                                    ? {
-                                          backgroundImage:
-                                              `url(${getCardBackground(
-                                                  myCard
-                                              )})`,
-                                      }
-                                    : undefined
-                            }
                         >
-
-                            <div
-                                className={
-                                    styles.cardNoise
-                                }
+                            <InstaCard
+                                card={myCard}
                             />
-
-
-                            <div
-                                className={
-                                    styles.cardOverlay
-                                }
-                            />
-
-
-                            <div
-                                className={
-                                    styles.cardTop
-                                }
-                            >
-
-                                <span>
-                                    INSTACARD®
-                                </span>
-
-                                <span>
-                                    {myCard.status
-                                        ?.toUpperCase()}
-                                </span>
-
-                            </div>
-
-
-                            {/* =====================================
-                                AVATAR
-                            ===================================== */}
-
-                            <div
-                                className={
-                                    styles.cardAvatar
-                                }
-                            >
-
-                                {getAvatarImage(
-                                    myCard
-                                ) ? (
-
-                                    <img
-                                        src={getAvatarImage(
-                                            myCard
-                                        )}
-                                        alt={
-                                            myCard.name
-                                        }
-                                    />
-
-                                ) : (
-
-                                    <span>
-                                        {getInitial(
-                                            myCard.name
-                                        )}
-                                    </span>
-
-                                )}
-
-                            </div>
-
-
-                            <div
-                                className={
-                                    styles.cardIdentity
-                                }
-                            >
-
-                                <small>
-                                    {myCard.role ||
-                                        "CREATOR"}
-                                </small>
-
-                                <h2>
-                                    {myCard.name}
-                                </h2>
-
-                                {myCard.bio && (
-                                    <p>
-                                        {myCard.bio}
-                                    </p>
-                                )}
-
-                            </div>
-
-
-                            <div
-                                className={
-                                    styles.cardBottom
-                                }
-                            >
-
-                                <span>
-                                    {myCard.skills
-                                        ?.slice(
-                                            0,
-                                            3
-                                        )
-                                        .join(
-                                            " / "
-                                        )}
-                                </span>
-
-                                <span>
-                                    ↗
-                                </span>
-
-                            </div>
-
                         </div>
-
 
                         {/* =========================================
                             INFO
@@ -517,18 +365,15 @@ const Lobby = () => {
                                 styles.myCardInfo
                             }
                         >
-
                             <span>
                                 THIS IS YOUR IDENTITY.
                             </span>
-
 
                             <h2>
                                 Make it
                                 <br />
                                 unforgettable.
                             </h2>
-
 
                             <p>
                                 Your InstaCard is your
@@ -537,13 +382,11 @@ const Lobby = () => {
                                 current and yours.
                             </p>
 
-
                             <div
                                 className={
                                     styles.actionGroup
                                 }
                             >
-
                                 <button
                                     onClick={() =>
                                         navigate(
@@ -552,11 +395,11 @@ const Lobby = () => {
                                     }
                                 >
                                     EDIT CARD
+
                                     <span>
                                         ↗
                                     </span>
                                 </button>
-
 
                                 <button
                                     className={
@@ -569,36 +412,29 @@ const Lobby = () => {
                                     }
                                 >
                                     VIEW CARD
+
                                     <span>
                                         ↗
                                     </span>
                                 </button>
-
                             </div>
-
                         </div>
-
                     </div>
-
                 ) : (
-
                     <div
                         className={
                             styles.createPanel
                         }
                     >
-
                         <span>
                             NO CARD YET
                         </span>
-
 
                         <h2>
                             BUILD YOUR
                             <br />
                             IDENTITY.
                         </h2>
-
 
                         <button
                             onClick={() =>
@@ -613,13 +449,9 @@ const Lobby = () => {
                                 ↗
                             </span>
                         </button>
-
                     </div>
-
                 )}
-
             </section>
-
 
             {/* =====================================================
                 NETWORK
@@ -628,13 +460,11 @@ const Lobby = () => {
             <section
                 className={styles.network}
             >
-
                 <div
                     className={
                         styles.sectionLabel
                     }
                 >
-
                     <span>
                         03
                     </span>
@@ -648,16 +478,13 @@ const Lobby = () => {
                             otherCards.length
                         ).padStart(2, "0")}
                     </strong>
-
                 </div>
-
 
                 <div
                     className={
                         styles.networkIntro
                     }
                 >
-
                     <h2>
                         PEOPLE
                         <br />
@@ -668,18 +495,14 @@ const Lobby = () => {
                         THE CARDS.
                     </h2>
 
-
                     <p>
                         Explore digital identities
                         created by people across
                         the network.
                     </p>
-
                 </div>
 
-
                 {loading ? (
-
                     <div
                         className={
                             styles.loading
@@ -687,15 +510,12 @@ const Lobby = () => {
                     >
                         LOADING NETWORK
                     </div>
-
                 ) : otherCards.length === 0 ? (
-
                     <div
                         className={
                             styles.empty
                         }
                     >
-
                         <span>
                             00
                         </span>
@@ -711,17 +531,13 @@ const Lobby = () => {
                             become the first
                             connection.
                         </p>
-
                     </div>
-
                 ) : (
-
                     <div
                         className={
                             styles.people
                         }
                     >
-
                         <div
                             className={
                                 styles.sectionHeader
@@ -742,13 +558,11 @@ const Lobby = () => {
                             <span />
                         </div>
 
-
                         {otherCards.map(
                             (
                                 card,
                                 index
                             ) => (
-
                                 <div
                                     key={
                                         card._id
@@ -775,7 +589,6 @@ const Lobby = () => {
                                         )
                                     }
                                 >
-
                                     <div
                                         className={
                                             styles.index
@@ -789,7 +602,6 @@ const Lobby = () => {
                                         )}
                                     </div>
 
-
                                     {/* NETWORK AVATAR */}
 
                                     <div
@@ -797,17 +609,14 @@ const Lobby = () => {
                                             styles.profileName
                                         }
                                     >
-
                                         <div
                                             className={
                                                 styles.networkAvatar
                                             }
                                         >
-
                                             {getAvatarImage(
                                                 card
                                             ) ? (
-
                                                 <img
                                                     src={getAvatarImage(
                                                         card
@@ -816,22 +625,16 @@ const Lobby = () => {
                                                         card.name
                                                     }
                                                 />
-
                                             ) : (
-
                                                 <span>
                                                     {getInitial(
                                                         card.name
                                                     )}
                                                 </span>
-
                                             )}
-
                                         </div>
 
-
                                         <div>
-
                                             <span>
                                                 {
                                                     card.name
@@ -842,18 +645,14 @@ const Lobby = () => {
                                                 {card.role ||
                                                     "CREATOR"}
                                             </small>
-
                                         </div>
-
                                     </div>
-
 
                                     <div
                                         className={
                                             styles.skills
                                         }
                                     >
-
                                         {card.skills
                                             ?.slice(
                                                 0,
@@ -863,7 +662,6 @@ const Lobby = () => {
                                                 (
                                                     skill
                                                 ) => (
-
                                                     <span
                                                         key={
                                                             skill
@@ -873,12 +671,9 @@ const Lobby = () => {
                                                             skill
                                                         }
                                                     </span>
-
                                                 )
                                             )}
-
                                     </div>
-
 
                                     <div
                                         className={
@@ -887,25 +682,18 @@ const Lobby = () => {
                                     >
                                         ↗
                                     </div>
-
                                 </div>
-
                             )
                         )}
-
                     </div>
-
                 )}
-
             </section>
-
 
             {/* =====================================================
                 CURSOR PREVIEW
             ===================================================== */}
 
             {hovered && (
-
                 <div
                     className={
                         styles.cursorPreview
@@ -917,9 +705,7 @@ const Lobby = () => {
                             mouse.y + 25,
                     }}
                 >
-
                     {(() => {
-
                         const card =
                             otherCards.find(
                                 (item) =>
@@ -933,13 +719,11 @@ const Lobby = () => {
 
                         return (
                             <>
-
                                 <div
                                     className={
                                         styles.previewTop
                                     }
                                 >
-
                                     <span>
                                         INSTANT
                                     </span>
@@ -955,20 +739,16 @@ const Lobby = () => {
                                             "0"
                                         )}
                                     </span>
-
                                 </div>
-
 
                                 <div
                                     className={
                                         styles.previewAvatar
                                     }
                                 >
-
                                     {getAvatarImage(
                                         card
                                     ) ? (
-
                                         <img
                                             src={getAvatarImage(
                                                 card
@@ -977,30 +757,23 @@ const Lobby = () => {
                                                 card.name
                                             }
                                         />
-
                                     ) : (
-
                                         <span>
                                             {getInitial(
                                                 card.name
                                             )}
                                         </span>
-
                                     )}
-
                                 </div>
-
 
                                 <h3>
                                     {card.name}
                                 </h3>
 
-
                                 <p>
                                     {card.role ||
                                         "DIGITAL CREATOR"}
                                 </p>
-
 
                                 <div
                                     className={
@@ -1008,13 +781,11 @@ const Lobby = () => {
                                     }
                                 />
 
-
                                 <div
                                     className={
                                         styles.previewSkills
                                     }
                                 >
-
                                     {card.skills
                                         ?.slice(
                                             0,
@@ -1024,7 +795,6 @@ const Lobby = () => {
                                             (
                                                 skill
                                             ) => (
-
                                                 <span
                                                     key={
                                                         skill
@@ -1034,12 +804,9 @@ const Lobby = () => {
                                                         skill
                                                     }
                                                 </span>
-
                                             )
                                         )}
-
                                 </div>
-
 
                                 <div
                                     className={
@@ -1048,16 +815,11 @@ const Lobby = () => {
                                 >
                                     VIEW PROFILE ↗
                                 </div>
-
                             </>
                         );
-
                     })()}
-
                 </div>
-
             )}
-
 
             {/* =====================================================
                 FOOTER
@@ -1066,7 +828,6 @@ const Lobby = () => {
             <footer
                 className={styles.footer}
             >
-
                 <span>
                     INSTACARD®
                 </span>
@@ -1080,9 +841,7 @@ const Lobby = () => {
                         ? "YOUR NETWORK AWAITS"
                         : "CREATE YOUR IDENTITY"}
                 </span>
-
             </footer>
-
         </main>
     );
 };

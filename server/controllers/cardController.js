@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import Card from "../models/Card.js";
 
 /* =========================================================
@@ -19,39 +20,107 @@ export const saveCard = async (req, res) => {
       status,
     } = req.body;
 
+    /* =======================================================
+       VALIDATION
+    ======================================================= */
+
     if (!name || !name.trim()) {
       return res.status(400).json({
         message: "Name is required",
       });
     }
 
-    const card = await Card.findOneAndUpdate(
-      { user: req.userId },
+    const normalizedStatus =
+      status === "published" ? "published" : "draft";
 
+    const normalizedSkills = Array.isArray(skills)
+      ? skills
+          .filter(
+            (skill) =>
+              typeof skill === "string" &&
+              skill.trim().length > 0
+          )
+          .map((skill) => skill.trim())
+          .slice(0, 8)
+      : [];
+
+    /* =======================================================
+       CARD DATA
+    ======================================================= */
+
+    const cardData = {
+      user: req.userId,
+
+      name: name.trim(),
+
+      role:
+        typeof role === "string"
+          ? role.trim()
+          : "",
+
+      bio:
+        typeof bio === "string"
+          ? bio.trim().slice(0, 180)
+          : "",
+
+      skills: normalizedSkills,
+
+      github:
+        typeof github === "string"
+          ? github.trim()
+          : "",
+
+      linkedin:
+        typeof linkedin === "string"
+          ? linkedin.trim()
+          : "",
+
+      portfolio:
+        typeof portfolio === "string"
+          ? portfolio.trim()
+          : "",
+
+      avatar:
+        avatar !== undefined
+          ? avatar
+          : null,
+
+      backgroundImage:
+        backgroundImage || null,
+
+      status: normalizedStatus,
+    };
+
+    /* =======================================================
+       CREATE OR UPDATE
+    ======================================================= */
+
+    const card = await Card.findOneAndUpdate(
       {
         user: req.userId,
-        name: name.trim(),
-        role: role || "",
-        bio: bio || "",
-        skills: skills || [],
-        github: github || "",
-        linkedin: linkedin || "",
-        portfolio: portfolio || "",
-        avatar: avatar || null,
-        backgroundImage: backgroundImage || null,
-        status: status || "draft",
+      },
+
+      {
+        $set: cardData,
       },
 
       {
         new: true,
         upsert: true,
         runValidators: true,
+        setDefaultsOnInsert: true,
       }
-    );
+    ).populate("user", "name email");
 
-    res.status(200).json({
+    /* =======================================================
+       RESPONSE
+    ======================================================= */
+
+    return res.status(200).json({
+      success: true,
+
       message:
-        status === "published"
+        normalizedStatus === "published"
           ? "Card published successfully"
           : "Card saved successfully",
 
@@ -60,55 +129,122 @@ export const saveCard = async (req, res) => {
   } catch (error) {
     console.error("Save card error:", error);
 
-    res.status(500).json({
+    /* =======================================================
+       DUPLICATE KEY
+    ======================================================= */
+
+    if (error.code === 11000) {
+      return res.status(409).json({
+        success: false,
+        message:
+          "A card already exists for this user.",
+      });
+    }
+
+    /* =======================================================
+       VALIDATION ERROR
+    ======================================================= */
+
+    if (error.name === "ValidationError") {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Invalid card data.",
+      });
+    }
+
+    return res.status(500).json({
+      success: false,
       message: "Server error",
     });
   }
 };
 
+
+/* =========================================================
+   GET ALL PUBLISHED CARDS
+========================================================= */
+
 export const getPublishedCards = async (req, res) => {
-    try {
-        const cards = await Card.find({
-            status: "published",
-        })
-            .populate("user", "name email")
-            .sort({ createdAt: -1 });
+  try {
+    const cards = await Card.find({
+      status: "published",
+    })
+      .populate("user", "name email")
+      .sort({
+        updatedAt: -1,
+      });
 
-        res.status(200).json({
-            cards,
-        });
-    } catch (error) {
-        console.error("Get published cards error:", error);
+    return res.status(200).json({
+      success: true,
+      cards,
+    });
+  } catch (error) {
+    console.error(
+      "Get published cards error:",
+      error
+    );
 
-        res.status(500).json({
-            message: "Server error",
-        });
-    }
+    return res.status(500).json({
+      success: false,
+      message: "Server error",
+    });
+  }
 };
+
+
+/* =========================================================
+   GET PUBLISHED CARD BY ID
+========================================================= */
+
 export const getCardById = async (req, res) => {
-    try {
-        const card = await Card.findOne({
-            _id: req.params.id,
-            status: "published",
-        }).populate("user", "name email");
+  try {
+    const { id } = req.params;
 
-        if (!card) {
-            return res.status(404).json({
-                message: "Card not found",
-            });
-        }
+    /* =======================================================
+       INVALID OBJECT ID
+    ======================================================= */
 
-        res.status(200).json({
-            card,
-        });
-    } catch (error) {
-        console.error("Get card error:", error);
-
-        res.status(500).json({
-            message: "Server error",
-        });
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid card ID",
+      });
     }
+
+    const card = await Card.findOne({
+      _id: id,
+      status: "published",
+    }).populate("user", "name email");
+
+    if (!card) {
+      return res.status(404).json({
+        success: false,
+        message: "Card not found",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      card,
+    });
+  } catch (error) {
+    console.error(
+      "Get card error:",
+      error
+    );
+
+    return res.status(500).json({
+      success: false,
+      message: "Server error",
+    });
+  }
 };
+
+
+/* =========================================================
+   GET CURRENT USER'S CARD
+========================================================= */
 
 export const getMyCard = async (req, res) => {
   try {
@@ -118,19 +254,25 @@ export const getMyCard = async (req, res) => {
 
     if (!card) {
       return res.status(404).json({
-        message: "You haven't created an InstaCard yet",
+        success: false,
+        message:
+          "You haven't created an InstaCard yet",
       });
     }
 
-    res.status(200).json({
+    return res.status(200).json({
+      success: true,
       card,
     });
   } catch (error) {
-    console.error("Get my card error:", error);
+    console.error(
+      "Get my card error:",
+      error
+    );
 
-    res.status(500).json({
+    return res.status(500).json({
+      success: false,
       message: "Server error",
     });
   }
 };
-
