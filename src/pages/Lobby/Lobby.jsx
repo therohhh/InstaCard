@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import styles from "./Lobby.module.css";
@@ -11,8 +11,12 @@ const Lobby = () => {
     const [cards, setCards] = useState([]);
 
     const [loading, setLoading] = useState(true);
-    const [hovered, setHovered] = useState(null);
+    const [error, setError] = useState("");
 
+    const [search, setSearch] = useState("");
+    const [activeSkill, setActiveSkill] = useState("ALL");
+
+    const [hovered, setHovered] = useState(null);
     const [mouse, setMouse] = useState({
         x: 0,
         y: 0,
@@ -36,20 +40,21 @@ const Lobby = () => {
                     Authorization: `Bearer ${token}`,
                 };
 
-                const [
-                    myCardResponse,
-                    cardsResponse,
-                ] = await Promise.all([
-                    fetch(
-                        "http://localhost:5000/api/cards/me",
-                        { headers }
-                    ),
-
-                    fetch(
-                        "http://localhost:5000/api/cards",
-                        { headers }
-                    ),
-                ]);
+                const [myCardResponse, cardsResponse] =
+                    await Promise.all([
+                        fetch(
+                            "http://localhost:5000/api/cards/me",
+                            {
+                                headers,
+                            }
+                        ),
+                        fetch(
+                            "http://localhost:5000/api/cards",
+                            {
+                                headers,
+                            }
+                        ),
+                    ]);
 
                 const myCardData =
                     await myCardResponse.json();
@@ -57,45 +62,42 @@ const Lobby = () => {
                 const cardsData =
                     await cardsResponse.json();
 
-                console.log(
-                    "MY CARD:",
-                    myCardData
-                );
-
-                console.log(
-                    "NETWORK CARDS:",
-                    cardsData
-                );
-
                 if (myCardResponse.ok) {
-                    setMyCard(
-                        myCardData.card
-                    );
+                    setMyCard(myCardData.card);
                 } else if (
                     myCardResponse.status === 401
                 ) {
-                    localStorage.removeItem(
-                        "token"
-                    );
-
-                    localStorage.removeItem(
-                        "user"
-                    );
+                    localStorage.removeItem("token");
+                    localStorage.removeItem("user");
 
                     navigate("/login");
-
                     return;
                 }
 
                 if (cardsResponse.ok) {
-                    setCards(
-                        cardsData.cards || []
+                    setCards(cardsData.cards || []);
+                } else if (
+                    cardsResponse.status === 401
+                ) {
+                    localStorage.removeItem("token");
+                    localStorage.removeItem("user");
+
+                    navigate("/login");
+                    return;
+                } else {
+                    setError(
+                        cardsData.message ||
+                            "Unable to load the network."
                     );
                 }
             } catch (error) {
                 console.error(
                     "Lobby loading error:",
                     error
+                );
+
+                setError(
+                    "Unable to connect to the InstaCard network."
                 );
             } finally {
                 setLoading(false);
@@ -109,10 +111,10 @@ const Lobby = () => {
        MOUSE
     ========================================================= */
 
-    const handleMouseMove = (e) => {
+    const handleMouseMove = (event) => {
         setMouse({
-            x: e.clientX,
-            y: e.clientY,
+            x: event.clientX,
+            y: event.clientY,
         });
     };
 
@@ -136,11 +138,126 @@ const Lobby = () => {
         return null;
     };
 
-    const otherCards = cards.filter(
-        (card) =>
-            !myCard ||
-            card._id !== myCard._id
-    );
+    /* =========================================================
+       NETWORK CARDS
+    ========================================================= */
+
+    const otherCards = useMemo(() => {
+        return cards.filter(
+            (card) =>
+                !myCard ||
+                card._id !== myCard._id
+        );
+    }, [cards, myCard]);
+
+    /* =========================================================
+       AVAILABLE SKILLS
+    ========================================================= */
+
+    const availableSkills = useMemo(() => {
+        const skillMap = new Map();
+
+        otherCards.forEach((card) => {
+            if (!Array.isArray(card.skills)) {
+                return;
+            }
+
+            card.skills.forEach((skill) => {
+                if (
+                    typeof skill !== "string" ||
+                    !skill.trim()
+                ) {
+                    return;
+                }
+
+                const normalized =
+                    skill.trim();
+
+                const key =
+                    normalized.toLowerCase();
+
+                if (!skillMap.has(key)) {
+                    skillMap.set(
+                        key,
+                        normalized
+                    );
+                }
+            });
+        });
+
+        return Array.from(
+            skillMap.values()
+        )
+            .sort((a, b) =>
+                a.localeCompare(b)
+            )
+            .slice(0, 12);
+    }, [otherCards]);
+
+    /* =========================================================
+       FILTER NETWORK
+    ========================================================= */
+
+    const filteredCards = useMemo(() => {
+        const query =
+            search.trim().toLowerCase();
+
+        return otherCards.filter((card) => {
+            const name =
+                card.name?.toLowerCase() || "";
+
+            const role =
+                card.role?.toLowerCase() || "";
+
+            const skills = Array.isArray(
+                card.skills
+            )
+                ? card.skills
+                      .map((skill) =>
+                          skill
+                              .toLowerCase()
+                              .trim()
+                      )
+                      .join(" ")
+                : "";
+
+            const matchesSearch =
+                !query ||
+                name.includes(query) ||
+                role.includes(query) ||
+                skills.includes(query);
+
+            const matchesSkill =
+                activeSkill === "ALL" ||
+                (Array.isArray(card.skills) &&
+                    card.skills.some(
+                        (skill) =>
+                            skill
+                                .toLowerCase()
+                                .trim() ===
+                            activeSkill.toLowerCase()
+                        )
+                    );
+
+            return (
+                matchesSearch &&
+                matchesSkill
+            );
+        });
+    }, [
+        otherCards,
+        search,
+        activeSkill,
+    ]);
+
+    /* =========================================================
+       CLEAR FILTERS
+    ========================================================= */
+
+    const clearFilters = () => {
+        setSearch("");
+        setActiveSkill("ALL");
+    };
 
     /* =========================================================
        RENDER
@@ -186,13 +303,8 @@ const Lobby = () => {
                 </div>
 
                 <div className={styles.navCenter}>
-                    <span>
-                        LOBBY
-                    </span>
-
-                    <span>
-                        NETWORK
-                    </span>
+                    <span>LOBBY</span>
+                    <span>NETWORK</span>
                 </div>
 
                 <div className={styles.navRight}>
@@ -203,6 +315,7 @@ const Lobby = () => {
                     </span>
 
                     <button
+                        type="button"
                         onClick={() =>
                             navigate(
                                 "/builder"
@@ -213,9 +326,7 @@ const Lobby = () => {
                             ? "EDIT CARD"
                             : "BUILD CARD"}
 
-                        <span>
-                            ↗
-                        </span>
+                        <span>↗</span>
                     </button>
                 </div>
             </nav>
@@ -236,9 +347,7 @@ const Lobby = () => {
                         DIGITAL IDENTITY NETWORK
                     </span>
 
-                    <span>
-                        2026
-                    </span>
+                    <span>2026</span>
                 </div>
 
                 <div
@@ -246,9 +355,7 @@ const Lobby = () => {
                         styles.heroTitle
                     }
                 >
-                    <div>
-                        YOUR
-                    </div>
+                    <div>YOUR</div>
 
                     <div
                         className={
@@ -263,13 +370,8 @@ const Lobby = () => {
                             styles.titleBottom
                         }
                     >
-                        <span>
-                            YOUR
-                        </span>
-
-                        <span>
-                            SPACE.
-                        </span>
+                        <span>YOUR</span>
+                        <span>SPACE.</span>
                     </div>
                 </div>
 
@@ -290,13 +392,8 @@ const Lobby = () => {
                         styles.scrollIndicator
                     }
                 >
-                    <span>
-                        SCROLL
-                    </span>
-
-                    <span>
-                        ↓
-                    </span>
+                    <span>SCROLL</span>
+                    <span>↓</span>
                 </div>
             </section>
 
@@ -314,13 +411,15 @@ const Lobby = () => {
                         styles.sectionLabel
                     }
                 >
-                    <span>
-                        02
-                    </span>
+                    <span>02</span>
 
                     <span>
                         YOUR INSTACARD
                     </span>
+
+                    <strong>
+                        {myCard ? "ACTIVE" : "NEW"}
+                    </strong>
                 </div>
 
                 {loading ? (
@@ -329,7 +428,15 @@ const Lobby = () => {
                             styles.loading
                         }
                     >
-                        LOADING YOUR IDENTITY
+                        <span>
+                            LOADING YOUR IDENTITY
+                        </span>
+
+                        <div
+                            className={
+                                styles.loader
+                            }
+                        />
                     </div>
                 ) : myCard ? (
                     <div
@@ -337,10 +444,6 @@ const Lobby = () => {
                             styles.myCardLayout
                         }
                     >
-                        {/* =========================================
-                            CARD
-                        ========================================= */}
-
                         <div
                             className={
                                 styles.myCardPreview
@@ -355,10 +458,6 @@ const Lobby = () => {
                                 card={myCard}
                             />
                         </div>
-
-                        {/* =========================================
-                            INFO
-                        ========================================= */}
 
                         <div
                             className={
@@ -376,10 +475,11 @@ const Lobby = () => {
                             </h2>
 
                             <p>
-                                Your InstaCard is your
-                                digital identity.
-                                Keep it sharp,
-                                current and yours.
+                                Your InstaCard is
+                                your digital
+                                identity. Keep it
+                                sharp, current and
+                                yours.
                             </p>
 
                             <div
@@ -388,6 +488,7 @@ const Lobby = () => {
                                 }
                             >
                                 <button
+                                    type="button"
                                     onClick={() =>
                                         navigate(
                                             "/builder"
@@ -395,13 +496,11 @@ const Lobby = () => {
                                     }
                                 >
                                     EDIT CARD
-
-                                    <span>
-                                        ↗
-                                    </span>
+                                    <span>↗</span>
                                 </button>
 
                                 <button
+                                    type="button"
                                     className={
                                         styles.secondaryButton
                                     }
@@ -412,10 +511,7 @@ const Lobby = () => {
                                     }
                                 >
                                     VIEW CARD
-
-                                    <span>
-                                        ↗
-                                    </span>
+                                    <span>↗</span>
                                 </button>
                             </div>
                         </div>
@@ -437,6 +533,7 @@ const Lobby = () => {
                         </h2>
 
                         <button
+                            type="button"
                             onClick={() =>
                                 navigate(
                                     "/builder"
@@ -444,10 +541,7 @@ const Lobby = () => {
                             }
                         >
                             CREATE INSTACARD
-
-                            <span>
-                                ↗
-                            </span>
+                            <span>↗</span>
                         </button>
                     </div>
                 )}
@@ -465,9 +559,7 @@ const Lobby = () => {
                         styles.sectionLabel
                     }
                 >
-                    <span>
-                        03
-                    </span>
+                    <span>03</span>
 
                     <span>
                         DISCOVER THE NETWORK
@@ -488,19 +580,165 @@ const Lobby = () => {
                     <h2>
                         PEOPLE
                         <br />
-                        <span>
-                            BEHIND
-                        </span>
+                        <span>BEHIND</span>
                         <br />
                         THE CARDS.
                     </h2>
 
                     <p>
-                        Explore digital identities
-                        created by people across
-                        the network.
+                        Explore digital
+                        identities created by
+                        people across the
+                        network.
                     </p>
                 </div>
+
+                {/* =================================================
+                    SEARCH + FILTER
+                ================================================= */}
+
+                {!loading &&
+                    otherCards.length > 0 && (
+                        <div
+                            className={
+                                styles.discoveryTools
+                            }
+                        >
+                            <div
+                                className={
+                                    styles.searchBox
+                                }
+                            >
+                                <span
+                                    className={
+                                        styles.searchIcon
+                                    }
+                                >
+                                    /
+                                </span>
+
+                                <input
+                                    type="text"
+                                    value={search}
+                                    onChange={(event) =>
+                                        setSearch(
+                                            event.target
+                                                .value
+                                        )
+                                    }
+                                    placeholder="SEARCH NAME, ROLE OR SKILL..."
+                                    aria-label="Search people by name, role or skill"
+                                />
+
+                                {search && (
+                                    <button
+                                        type="button"
+                                        className={
+                                            styles.clearSearch
+                                        }
+                                        onClick={() =>
+                                            setSearch(
+                                                ""
+                                            )
+                                        }
+                                        aria-label="Clear search"
+                                    >
+                                        ×
+                                    </button>
+                                )}
+                            </div>
+
+                            <div
+                                className={
+                                    styles.filterBar
+                                }
+                            >
+                                <button
+                                    type="button"
+                                    className={`${styles.filterButton} ${
+                                        activeSkill ===
+                                        "ALL"
+                                            ? styles.filterActive
+                                            : ""
+                                    }`}
+                                    onClick={() =>
+                                        setActiveSkill(
+                                            "ALL"
+                                        )
+                                    }
+                                >
+                                    ALL
+                                </button>
+
+                                {availableSkills.map(
+                                    (skill) => (
+                                        <button
+                                            type="button"
+                                            key={skill}
+                                            className={`${styles.filterButton} ${
+                                                activeSkill.toLowerCase() ===
+                                                skill.toLowerCase()
+                                                    ? styles.filterActive
+                                                    : ""
+                                            }`}
+                                            onClick={() =>
+                                                setActiveSkill(
+                                                    skill
+                                                )
+                                            }
+                                        >
+                                            {skill}
+                                        </button>
+                                    )
+                                )}
+                            </div>
+
+                            <div
+                                className={
+                                    styles.resultsMeta
+                                }
+                            >
+                                <span>
+                                    {filteredCards.length ===
+                                    1
+                                        ? "01 PERSON FOUND"
+                                        : `${String(
+                                              filteredCards.length
+                                          ).padStart(
+                                              2,
+                                              "0"
+                                          )} PEOPLE FOUND`}
+                                </span>
+
+                                <span>
+                                    {activeSkill !==
+                                    "ALL"
+                                        ? `SKILL / ${activeSkill.toUpperCase()}`
+                                        : search
+                                        ? `SEARCH / ${search.toUpperCase()}`
+                                        : "FILTER / ALL"}
+                                </span>
+
+                                {(search ||
+                                    activeSkill !==
+                                        "ALL") && (
+                                    <button
+                                        type="button"
+                                        onClick={
+                                            clearFilters
+                                        }
+                                    >
+                                        CLEAR FILTERS
+                                        <span>×</span>
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+                    )}
+
+                {/* =================================================
+                    NETWORK STATES
+                ================================================= */}
 
                 {loading ? (
                     <div
@@ -508,7 +746,31 @@ const Lobby = () => {
                             styles.loading
                         }
                     >
-                        LOADING NETWORK
+                        <span>
+                            LOADING NETWORK
+                        </span>
+
+                        <div
+                            className={
+                                styles.loader
+                            }
+                        />
+                    </div>
+                ) : error ? (
+                    <div
+                        className={
+                            styles.empty
+                        }
+                    >
+                        <span>ERROR / 500</span>
+
+                        <h3>
+                            NETWORK
+                            <br />
+                            UNAVAILABLE.
+                        </h3>
+
+                        <p>{error}</p>
                     </div>
                 ) : otherCards.length === 0 ? (
                     <div
@@ -516,9 +778,7 @@ const Lobby = () => {
                             styles.empty
                         }
                     >
-                        <span>
-                            00
-                        </span>
+                        <span>00</span>
 
                         <h3>
                             YOU ARE EARLY.
@@ -532,47 +792,52 @@ const Lobby = () => {
                             connection.
                         </p>
                     </div>
+                ) : filteredCards.length ===
+                  0 ? (
+                    <div
+                        className={
+                            styles.empty
+                        }
+                    >
+                        <span>00 / NO MATCH</span>
+
+                        <h3>
+                            NOTHING
+                            <br />
+                            FOUND.
+                        </h3>
+
+                        <p>
+                            Try another name,
+                            role or skill.
+                        </p>
+
+                        <button
+                            type="button"
+                            className={
+                                styles.emptyButton
+                            }
+                            onClick={
+                                clearFilters
+                            }
+                        >
+                            RESET SEARCH
+                            <span>↗</span>
+                        </button>
+                    </div>
                 ) : (
                     <div
                         className={
-                            styles.people
+                            styles.cardGrid
                         }
                     >
-                        <div
-                            className={
-                                styles.sectionHeader
-                            }
-                        >
-                            <span>
-                                INDEX
-                            </span>
-
-                            <span>
-                                PROFILE
-                            </span>
-
-                            <span>
-                                EXPERTISE
-                            </span>
-
-                            <span />
-                        </div>
-
-                        {otherCards.map(
-                            (
-                                card,
-                                index
-                            ) => (
-                                <div
-                                    key={
-                                        card._id
+                        {filteredCards.map(
+                            (card, index) => (
+                                <article
+                                    key={card._id}
+                                    className={
+                                        styles.networkCard
                                     }
-                                    className={`${styles.profileRow} ${
-                                        hovered ===
-                                        card._id
-                                            ? styles.active
-                                            : ""
-                                    }`}
                                     onMouseEnter={() =>
                                         setHovered(
                                             card._id
@@ -591,98 +856,64 @@ const Lobby = () => {
                                 >
                                     <div
                                         className={
-                                            styles.index
+                                            styles.cardIndex
                                         }
                                     >
-                                        {String(
-                                            index + 1
-                                        ).padStart(
-                                            2,
-                                            "0"
-                                        )}
-                                    </div>
+                                        <span>
+                                            {String(
+                                                index +
+                                                    1
+                                            ).padStart(
+                                                2,
+                                                "0"
+                                            )}
+                                        </span>
 
-                                    {/* NETWORK AVATAR */}
+                                        <span>
+                                            {card.role ||
+                                                "CREATOR"}
+                                        </span>
+                                    </div>
 
                                     <div
                                         className={
-                                            styles.profileName
+                                            styles.cardPreview
                                         }
                                     >
-                                        <div
-                                            className={
-                                                styles.networkAvatar
-                                            }
-                                        >
-                                            {getAvatarImage(
+                                        <InstaCard
+                                            card={
                                                 card
-                                            ) ? (
-                                                <img
-                                                    src={getAvatarImage(
-                                                        card
-                                                    )}
-                                                    alt={
-                                                        card.name
-                                                    }
-                                                />
-                                            ) : (
-                                                <span>
-                                                    {getInitial(
-                                                        card.name
-                                                    )}
-                                                </span>
-                                            )}
-                                        </div>
+                                            }
+                                        />
+                                    </div>
 
+                                    <div
+                                        className={
+                                            styles.networkCardMeta
+                                        }
+                                    >
                                         <div>
-                                            <span>
+                                            <strong>
                                                 {
                                                     card.name
                                                 }
-                                            </span>
+                                            </strong>
 
-                                            <small>
+                                            <span>
                                                 {card.role ||
-                                                    "CREATOR"}
-                                            </small>
+                                                    "DIGITAL CREATOR"}
+                                            </span>
                                         </div>
-                                    </div>
 
-                                    <div
-                                        className={
-                                            styles.skills
-                                        }
-                                    >
-                                        {card.skills
-                                            ?.slice(
-                                                0,
-                                                3
-                                            )
-                                            .map(
-                                                (
-                                                    skill
-                                                ) => (
-                                                    <span
-                                                        key={
-                                                            skill
-                                                        }
-                                                    >
-                                                        {
-                                                            skill
-                                                        }
-                                                    </span>
-                                                )
-                                            )}
+                                        <span
+                                            className={
+                                                styles.cardArrow
+                                            }
+                                        >
+                                            ↗
+                                        </span>
                                     </div>
-
-                                    <div
-                                        className={
-                                            styles.arrow
-                                        }
-                                    >
-                                        ↗
-                                    </div>
-                                </div>
+                                </article>
                             )
                         )}
                     </div>
@@ -699,15 +930,13 @@ const Lobby = () => {
                         styles.cursorPreview
                     }
                     style={{
-                        left:
-                            mouse.x + 25,
-                        top:
-                            mouse.y + 25,
+                        left: mouse.x + 25,
+                        top: mouse.y + 25,
                     }}
                 >
                     {(() => {
                         const card =
-                            otherCards.find(
+                            filteredCards.find(
                                 (item) =>
                                     item._id ===
                                     hovered
@@ -716,6 +945,11 @@ const Lobby = () => {
                         if (!card) {
                             return null;
                         }
+
+                        const avatar =
+                            getAvatarImage(
+                                card
+                            );
 
                         return (
                             <>
@@ -731,7 +965,7 @@ const Lobby = () => {
                                     <span>
                                         #
                                         {String(
-                                            otherCards.indexOf(
+                                            filteredCards.indexOf(
                                                 card
                                             ) + 1
                                         ).padStart(
@@ -746,13 +980,11 @@ const Lobby = () => {
                                         styles.previewAvatar
                                     }
                                 >
-                                    {getAvatarImage(
-                                        card
-                                    ) ? (
+                                    {avatar ? (
                                         <img
-                                            src={getAvatarImage(
-                                                card
-                                            )}
+                                            src={
+                                                avatar
+                                            }
                                             alt={
                                                 card.name
                                             }

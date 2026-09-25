@@ -1,7 +1,7 @@
 import { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import styles from "./Builder.module.css";
 import html2canvas from "html2canvas";
+import styles from "./Builder.module.css";
 
 const fallbackAvatar = {
     color: "#1f2937",
@@ -25,16 +25,11 @@ const Builder = () => {
     });
 
     const [skillInput, setSkillInput] = useState("");
-
     const [avatarImage, setAvatarImage] = useState(null);
     const [backgroundImage, setBackgroundImage] = useState(null);
 
     const [error, setError] = useState("");
     const [saving, setSaving] = useState(false);
-
-    /* =========================================================
-       FORM CHANGE
-    ========================================================= */
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -47,20 +42,21 @@ const Builder = () => {
         setError("");
     };
 
-    /* =========================================================
-       ADD SKILL
-    ========================================================= */
-
     const addSkill = () => {
         const skill = skillInput.trim();
 
         if (!skill) return;
 
         if (card.skills.length >= 8) {
+            setError("You can add up to 8 skills.");
             return;
         }
 
-        if (card.skills.includes(skill)) {
+        const alreadyExists = card.skills.some(
+            (item) => item.toLowerCase() === skill.toLowerCase()
+        );
+
+        if (alreadyExists) {
             setSkillInput("");
             return;
         }
@@ -71,11 +67,8 @@ const Builder = () => {
         }));
 
         setSkillInput("");
+        setError("");
     };
-
-    /* =========================================================
-       REMOVE SKILL
-    ========================================================= */
 
     const removeSkill = (skillToRemove) => {
         setCard((prev) => ({
@@ -86,15 +79,11 @@ const Builder = () => {
         }));
     };
 
-    /* =========================================================
-       IMAGE → BASE64
-    ========================================================= */
-
     const handleImageUpload = (file, setter) => {
         if (!file) return;
 
         if (!file.type.startsWith("image/")) {
-            alert("Please select an image file.");
+            setError("Please select a valid image file.");
             return;
         }
 
@@ -102,18 +91,15 @@ const Builder = () => {
 
         reader.onload = () => {
             setter(reader.result);
+            setError("");
         };
 
         reader.onerror = () => {
-            alert("Unable to read the image.");
+            setError("Unable to read the selected image.");
         };
 
         reader.readAsDataURL(file);
     };
-
-    /* =========================================================
-       PROFILE PICTURE
-    ========================================================= */
 
     const handleAvatarUpload = (e) => {
         const file = e.target.files?.[0];
@@ -123,10 +109,6 @@ const Builder = () => {
         e.target.value = "";
     };
 
-    /* =========================================================
-       BACKGROUND IMAGE
-    ========================================================= */
-
     const handleBackgroundUpload = (e) => {
         const file = e.target.files?.[0];
 
@@ -135,54 +117,37 @@ const Builder = () => {
         e.target.value = "";
     };
 
-    /* =========================================================
-       DOWNLOAD CARD
-    ========================================================= */
-
     const downloadCard = async () => {
         if (!cardRef.current) return;
 
         try {
-            const canvas = await html2canvas(
-                cardRef.current,
-                {
-                    useCORS: true,
-                    scale: 2,
-                    backgroundColor: null,
-                }
-            );
+            const canvas = await html2canvas(cardRef.current, {
+                useCORS: true,
+                scale: 2,
+                backgroundColor: null,
+            });
 
-            const image = canvas.toDataURL(
-                "image/jpeg",
-                0.95
-            );
+            const image = canvas.toDataURL("image/jpeg", 0.95);
 
-            const link =
-                document.createElement("a");
+            const link = document.createElement("a");
 
             link.href = image;
             link.download = "instacard.jpg";
 
             document.body.appendChild(link);
-
             link.click();
-
             document.body.removeChild(link);
-        } catch (error) {
+        } catch (downloadError) {
             console.error(
                 "Card download failed:",
-                error
+                downloadError
             );
 
-            alert(
+            setError(
                 "Unable to download the card. Please try again."
             );
         }
     };
-
-    /* =========================================================
-       SAVE + PUBLISH
-    ========================================================= */
 
     const saveAndPushToLobby = async () => {
         const token = localStorage.getItem("token");
@@ -193,7 +158,6 @@ const Builder = () => {
             );
 
             navigate("/login");
-
             return;
         }
 
@@ -217,17 +181,16 @@ const Builder = () => {
 
                 avatar: avatarImage
                     ? {
-                        type: "image",
-                        url: avatarImage,
-                    }
+                          type: "image",
+                          url: avatarImage,
+                      }
                     : {
-                        type: "letter",
-                        label: card.name
-                            .charAt(0)
-                            .toUpperCase(),
-                        color:
-                            fallbackAvatar.color,
-                    },
+                          type: "letter",
+                          label: card.name
+                              .charAt(0)
+                              .toUpperCase(),
+                          color: fallbackAvatar.color,
+                      },
 
                 backgroundImage:
                     backgroundImage || null,
@@ -241,11 +204,8 @@ const Builder = () => {
                     method: "POST",
 
                     headers: {
-                        "Content-Type":
-                            "application/json",
-
-                        Authorization:
-                            `Bearer ${token}`,
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${token}`,
                     },
 
                     body: JSON.stringify(payload),
@@ -254,15 +214,12 @@ const Builder = () => {
 
             const data = await response.json();
 
-            console.log(
-                "Publish response:",
-                data
-            );
+            console.log("Publish response:", data);
 
             if (!response.ok) {
                 setError(
                     data.message ||
-                    "Failed to publish card."
+                        "Failed to publish card."
                 );
 
                 return;
@@ -276,10 +233,6 @@ const Builder = () => {
                 return;
             }
 
-            /* ================================================
-               SAVE LATEST CARD LOCALLY
-            ================================================= */
-
             localStorage.setItem(
                 "instacard",
                 JSON.stringify(data.card)
@@ -288,11 +241,10 @@ const Builder = () => {
             navigate("/lobby", {
                 replace: true,
             });
-            
-        } catch (error) {
+        } catch (publishError) {
             console.error(
                 "Publish card error:",
-                error
+                publishError
             );
 
             setError(
@@ -303,98 +255,112 @@ const Builder = () => {
         }
     };
 
-    /* =========================================================
-       RENDER
-    ========================================================= */
+    const displaySkills =
+        card.skills.length > 0
+            ? card.skills
+            : ["React", "Node.js", "MongoDB"];
 
     return (
         <div className={styles.builderPage}>
+            {/* =====================================================
+                BACKGROUND
+            ===================================================== */}
+
+            <div className={styles.backgroundGrid} />
+            <div className={styles.backgroundGlow} />
+            <div className={styles.backgroundOrb} />
 
             {/* =====================================================
                 HEADER
             ===================================================== */}
 
             <header className={styles.header}>
+                <div className={styles.headerBrand}>
+                    <button
+                        type="button"
+                        className={styles.backButton}
+                        onClick={() => navigate("/lobby")}
+                    >
+                        ← Lobby
+                    </button>
 
-                <div>
-
-                    <p className={styles.eyebrow}>
+                    <div className={styles.brandMark}>
+                        <span />
                         INSTACARD
-                    </p>
-
-                    <h1>
-                        Create your card
-                    </h1>
-
-                    <p className={styles.subtitle}>
-                        Build your professional identity
-                        and share it with the world.
-                    </p>
-
+                    </div>
                 </div>
 
+                <div className={styles.headerStatus}>
+                    <span className={styles.statusDot} />
+                    LIVE BUILDER
+                </div>
             </header>
 
+            {/* =====================================================
+                INTRO
+            ===================================================== */}
+
+            <section className={styles.intro}>
+                <div className={styles.introMeta}>
+                    <span>01</span>
+                    <span>CREATE / DEFINE / SHARE</span>
+                </div>
+
+                <h1>
+                    Build your
+                    <span> identity.</span>
+                </h1>
+
+                <p>
+                    Create a professional identity card
+                    that makes your work instantly
+                    recognizable.
+                </p>
+            </section>
 
             {/* =====================================================
                 BUILDER
             ===================================================== */}
 
             <main className={styles.builderContainer}>
-
                 {/* =================================================
-                    LEFT — FORM
+                    LEFT — EDITOR
                 ================================================= */}
 
-                <section
-                    className={styles.formSection}
-                >
+                <section className={styles.formSection}>
+                    <div className={styles.sectionHeader}>
+                        <div>
+                            <span className={styles.sectionNumber}>
+                                01
+                            </span>
 
-                    <div
-                        className={
-                            styles.sectionHeader
-                        }
-                    >
+                            <h2>Card Details</h2>
+                        </div>
 
-                        <h2>
-                            Card Details
-                        </h2>
-
-                        <span>
-                            Live Preview
+                        <span className={styles.liveLabel}>
+                            ● LIVE
                         </span>
-
                     </div>
 
-
                     <div className={styles.form}>
-
                         {/* =================================================
-                            PROFILE PICTURE
+                            PROFILE MEDIA
                         ================================================= */}
 
-                        <div
-                            className={
-                                styles.controlSection
-                            }
-                        >
+                        <div className={styles.controlSection}>
+                            <div className={styles.controlHeading}>
+                                <div>
+                                    <span className={styles.controlIndex}>
+                                        01
+                                    </span>
 
-                            <div
-                                className={
-                                    styles.controlHeading
-                                }
-                            >
+                                    <label>
+                                        Profile Picture
+                                    </label>
+                                </div>
 
-                                <label>
-                                    Profile Picture
-                                </label>
-
-                                <span>
-                                    Optional
-                                </span>
-
+                                <span>OPTIONAL</span>
                             </div>
-
 
                             <input
                                 ref={avatarInputRef}
@@ -403,60 +369,46 @@ const Builder = () => {
                                 onChange={
                                     handleAvatarUpload
                                 }
-                                className={
-                                    styles.fileInput
-                                }
+                                className={styles.fileInput}
                             />
-
 
                             <div
                                 className={
                                     styles.profileUploadArea
                                 }
                             >
-
-                                {avatarImage ? (
-                                    <img
-                                        src={
-                                            avatarImage
-                                        }
-                                        alt="Profile preview"
-                                        className={
-                                            styles.uploadedAvatar
-                                        }
-                                    />
-                                ) : (
-                                    <div
-                                        className={
-                                            styles.emptyAvatar
-                                        }
-                                    >
-                                        ?
-                                    </div>
-                                )}
-
+                                <div
+                                    className={
+                                        styles.avatarUploadPreview
+                                    }
+                                >
+                                    {avatarImage ? (
+                                        <img
+                                            src={avatarImage}
+                                            alt="Profile preview"
+                                        />
+                                    ) : (
+                                        <span>+</span>
+                                    )}
+                                </div>
 
                                 <div
                                     className={
                                         styles.profileUploadInfo
                                     }
                                 >
-
                                     <strong>
                                         {avatarImage
                                             ? "Profile picture added"
-                                            : "Add your profile picture"}
+                                            : "Add profile picture"}
                                     </strong>
 
                                     <span>
-                                        Use a clear professional
-                                        photo.
+                                        Use a clear,
+                                        professional image.
                                     </span>
-
                                 </div>
-
                             </div>
-
 
                             <button
                                 type="button"
@@ -464,98 +416,82 @@ const Builder = () => {
                                     styles.uploadButton
                                 }
                                 onClick={() =>
-                                    avatarInputRef
-                                        .current
-                                        ?.click()
+                                    avatarInputRef.current?.click()
                                 }
                             >
-                                ↑
-
+                                ↑{" "}
                                 {avatarImage
-                                    ? "Change Profile Picture"
-                                    : "Upload Profile Picture"}
+                                    ? "Change image"
+                                    : "Upload image"}
                             </button>
-
 
                             {avatarImage && (
                                 <button
                                     type="button"
                                     className={
-                                        styles.removeBackground
+                                        styles.removeButton
                                     }
                                     onClick={() =>
-                                        setAvatarImage(
-                                            null
-                                        )
+                                        setAvatarImage(null)
                                     }
                                 >
                                     Remove profile picture
                                 </button>
                             )}
-
                         </div>
-
 
                         {/* =================================================
                             BACKGROUND
                         ================================================= */}
 
-                        <div
-                            className={
-                                styles.controlSection
-                            }
-                        >
+                        <div className={styles.controlSection}>
+                            <div className={styles.controlHeading}>
+                                <div>
+                                    <span className={styles.controlIndex}>
+                                        02
+                                    </span>
 
-                            <div
-                                className={
-                                    styles.controlHeading
-                                }
-                            >
+                                    <label>
+                                        Card Background
+                                    </label>
+                                </div>
 
-                                <label>
-                                    Card Background
-                                </label>
-
-                                <span>
-                                    Optional
-                                </span>
-
+                                <span>OPTIONAL</span>
                             </div>
 
-
                             <input
-                                ref={
-                                    backgroundInputRef
-                                }
+                                ref={backgroundInputRef}
                                 type="file"
                                 accept="image/*"
                                 onChange={
                                     handleBackgroundUpload
                                 }
-                                className={
-                                    styles.fileInput
-                                }
+                                className={styles.fileInput}
                             />
-
 
                             <button
                                 type="button"
                                 className={
-                                    styles.uploadButton
+                                    styles.backgroundUploadButton
                                 }
                                 onClick={() =>
-                                    backgroundInputRef
-                                        .current
-                                        ?.click()
+                                    backgroundInputRef.current?.click()
                                 }
                             >
-                                ↑
+                                <span className={styles.uploadIcon}>
+                                    +
+                                </span>
 
-                                {backgroundImage
-                                    ? "Change Background Image"
-                                    : "Upload Background Image"}
+                                <span>
+                                    {backgroundImage
+                                        ? "Change background image"
+                                        : "Add a custom background"}
+                                </span>
+
+                                <span className={styles.uploadArrow}>
+                                    ↗
+                                </span>
                             </button>
-
 
                             {backgroundImage && (
                                 <div
@@ -563,62 +499,43 @@ const Builder = () => {
                                         styles.backgroundPreview
                                     }
                                 >
-
                                     <img
-                                        src={
-                                            backgroundImage
-                                        }
+                                        src={backgroundImage}
                                         alt="Background preview"
                                     />
 
                                     <button
                                         type="button"
                                         onClick={() =>
-                                            setBackgroundImage(
-                                                null
-                                            )
+                                            setBackgroundImage(null)
                                         }
                                     >
-                                        Remove background
+                                        Remove
                                     </button>
-
                                 </div>
                             )}
-
                         </div>
-
 
                         {/* =================================================
                             BASIC INFORMATION
                         ================================================= */}
 
-                        <div
-                            className={
-                                styles.controlSection
-                            }
-                        >
+                        <div className={styles.controlSection}>
+                            <div className={styles.controlHeading}>
+                                <div>
+                                    <span className={styles.controlIndex}>
+                                        03
+                                    </span>
 
-                            <div
-                                className={
-                                    styles.controlHeading
-                                }
-                            >
-
-                                <label>
-                                    Basic Information
-                                </label>
-
+                                    <label>
+                                        Basic Information
+                                    </label>
+                                </div>
                             </div>
 
-
-                            <div
-                                className={
-                                    styles.field
-                                }
-                            >
-
+                            <div className={styles.field}>
                                 <label htmlFor="name">
-                                    Name
+                                    NAME
                                 </label>
 
                                 <input
@@ -627,22 +544,14 @@ const Builder = () => {
                                     type="text"
                                     placeholder="Rohith Lenka"
                                     value={card.name}
-                                    onChange={
-                                        handleChange
-                                    }
+                                    onChange={handleChange}
+                                    autoComplete="name"
                                 />
-
                             </div>
 
-
-                            <div
-                                className={
-                                    styles.field
-                                }
-                            >
-
+                            <div className={styles.field}>
                                 <label htmlFor="role">
-                                    Role
+                                    ROLE
                                 </label>
 
                                 <input
@@ -651,22 +560,13 @@ const Builder = () => {
                                     type="text"
                                     placeholder="Software Developer"
                                     value={card.role}
-                                    onChange={
-                                        handleChange
-                                    }
+                                    onChange={handleChange}
                                 />
-
                             </div>
 
-
-                            <div
-                                className={
-                                    styles.field
-                                }
-                            >
-
+                            <div className={styles.field}>
                                 <label htmlFor="bio">
-                                    Bio
+                                    BIO
                                 </label>
 
                                 <textarea
@@ -676,9 +576,7 @@ const Builder = () => {
                                     maxLength="180"
                                     placeholder="Tell people a little about yourself..."
                                     value={card.bio}
-                                    onChange={
-                                        handleChange
-                                    }
+                                    onChange={handleChange}
                                 />
 
                                 <span
@@ -688,51 +586,37 @@ const Builder = () => {
                                 >
                                     {card.bio.length}/180
                                 </span>
-
                             </div>
-
                         </div>
-
 
                         {/* =================================================
                             SKILLS
                         ================================================= */}
 
-                        <div
-                            className={
-                                styles.controlSection
-                            }
-                        >
+                        <div className={styles.controlSection}>
+                            <div className={styles.controlHeading}>
+                                <div>
+                                    <span className={styles.controlIndex}>
+                                        04
+                                    </span>
 
-                            <div
-                                className={
-                                    styles.controlHeading
-                                }
-                            >
-
-                                <label>
-                                    Skills
-                                </label>
+                                    <label>Skills</label>
+                                </div>
 
                                 <span>
                                     {card.skills.length}/8
                                 </span>
-
                             </div>
-
 
                             <div
                                 className={
                                     styles.skillInputWrapper
                                 }
                             >
-
                                 <input
                                     type="text"
-                                    placeholder="e.g. React"
-                                    value={
-                                        skillInput
-                                    }
+                                    placeholder="Add a skill..."
+                                    value={skillInput}
                                     maxLength="20"
                                     onChange={(e) =>
                                         setSkillInput(
@@ -750,15 +634,11 @@ const Builder = () => {
                                     }}
                                 />
 
-
                                 <button
                                     type="button"
-                                    onClick={
-                                        addSkill
-                                    }
+                                    onClick={addSkill}
                                     disabled={
-                                        card.skills
-                                            .length >=
+                                        card.skills.length >=
                                         8
                                     }
                                     className={
@@ -767,86 +647,66 @@ const Builder = () => {
                                 >
                                     Add
                                 </button>
-
                             </div>
 
-
-                            <div
-                                className={
-                                    styles.skillList
-                                }
-                            >
-
-                                {card.skills.map(
-                                    (skill) => (
-                                        <div
-                                            className={
-                                                styles.skillTag
-                                            }
-                                            key={
-                                                skill
-                                            }
-                                        >
-
-                                            <span>
-                                                {skill}
-                                            </span>
-
-                                            <button
-                                                type="button"
-                                                onClick={() =>
-                                                    removeSkill(
-                                                        skill
-                                                    )
+                            {card.skills.length > 0 && (
+                                <div
+                                    className={
+                                        styles.skillList
+                                    }
+                                >
+                                    {card.skills.map(
+                                        (skill) => (
+                                            <div
+                                                className={
+                                                    styles.skillTag
                                                 }
+                                                key={skill}
                                             >
-                                                ×
-                                            </button>
+                                                <span>
+                                                    {skill}
+                                                </span>
 
-                                        </div>
-                                    )
-                                )}
-
-                            </div>
-
+                                                <button
+                                                    type="button"
+                                                    onClick={() =>
+                                                        removeSkill(
+                                                            skill
+                                                        )
+                                                    }
+                                                    aria-label={`Remove ${skill}`}
+                                                >
+                                                    ×
+                                                </button>
+                                            </div>
+                                        )
+                                    )}
+                                </div>
+                            )}
                         </div>
-
 
                         {/* =================================================
                             SOCIAL LINKS
                         ================================================= */}
 
-                        <div
-                            className={
-                                styles.controlSection
-                            }
-                        >
+                        <div className={styles.controlSection}>
+                            <div className={styles.controlHeading}>
+                                <div>
+                                    <span className={styles.controlIndex}>
+                                        05
+                                    </span>
 
-                            <div
-                                className={
-                                    styles.controlHeading
-                                }
-                            >
+                                    <label>
+                                        Social Links
+                                    </label>
+                                </div>
 
-                                <label>
-                                    Social Links
-                                </label>
-
-                                <span>
-                                    Optional
-                                </span>
-
+                                <span>OPTIONAL</span>
                             </div>
 
-
-                            <div
-                                className={
-                                    styles.field
-                                }
-                            >
-
+                            <div className={styles.field}>
                                 <label htmlFor="github">
-                                    GitHub
+                                    GITHUB
                                 </label>
 
                                 <input
@@ -854,25 +714,14 @@ const Builder = () => {
                                     name="github"
                                     type="url"
                                     placeholder="https://github.com/username"
-                                    value={
-                                        card.github
-                                    }
-                                    onChange={
-                                        handleChange
-                                    }
+                                    value={card.github}
+                                    onChange={handleChange}
                                 />
-
                             </div>
 
-
-                            <div
-                                className={
-                                    styles.field
-                                }
-                            >
-
+                            <div className={styles.field}>
                                 <label htmlFor="linkedin">
-                                    LinkedIn
+                                    LINKEDIN
                                 </label>
 
                                 <input
@@ -880,25 +729,14 @@ const Builder = () => {
                                     name="linkedin"
                                     type="url"
                                     placeholder="https://linkedin.com/in/username"
-                                    value={
-                                        card.linkedin
-                                    }
-                                    onChange={
-                                        handleChange
-                                    }
+                                    value={card.linkedin}
+                                    onChange={handleChange}
                                 />
-
                             </div>
 
-
-                            <div
-                                className={
-                                    styles.field
-                                }
-                            >
-
+                            <div className={styles.field}>
                                 <label htmlFor="portfolio">
-                                    Portfolio
+                                    PORTFOLIO
                                 </label>
 
                                 <input
@@ -906,118 +744,88 @@ const Builder = () => {
                                     name="portfolio"
                                     type="url"
                                     placeholder="https://yourportfolio.com"
-                                    value={
-                                        card.portfolio
-                                    }
-                                    onChange={
-                                        handleChange
-                                    }
+                                    value={card.portfolio}
+                                    onChange={handleChange}
                                 />
-
                             </div>
-
                         </div>
 
-
-                        {/* ERROR */}
-
                         {error && (
-                            <p
+                            <div
                                 className={
                                     styles.errorMessage
                                 }
                             >
+                                <span>!</span>
                                 {error}
-                            </p>
+                            </div>
                         )}
-
                     </div>
-
                 </section>
 
-
                 {/* =================================================
-                    RIGHT — PREVIEW
+                    RIGHT — LIVE PREVIEW
                 ================================================= */}
 
-                <section
-                    className={
-                        styles.previewSection
-                    }
-                >
-
-                    <div
-                        className={
-                            styles.previewHeader
-                        }
-                    >
-
+                <section className={styles.previewSection}>
+                    <div className={styles.previewHeader}>
                         <div>
-
-                            <p>
-                                PREVIEW
-                            </p>
-
-                            <span>
-                                Your card updates automatically
+                            <span className={styles.previewNumber}>
+                                02
                             </span>
 
+                            <div>
+                                <p>LIVE PREVIEW</p>
+                                <span>
+                                    Changes appear instantly
+                                </span>
+                            </div>
                         </div>
 
+                        <span className={styles.previewHint}>
+                            DRAG / EXPLORE
+                        </span>
                     </div>
 
-
-                    <div
-                        className={
-                            styles.previewArea
-                        }
-                    >
-
-                        {/* =================================================
-                            PROFILE CARD
-                        ================================================= */}
+                    <div className={styles.previewArea}>
+                        <div className={styles.previewGrid} />
 
                         <div
                             ref={cardRef}
-                            className={
-                                styles.profileCard
-                            }
+                            className={styles.profileCard}
                             style={
                                 backgroundImage
                                     ? {
-                                        backgroundImage:
-                                            `url(${backgroundImage})`,
-                                    }
+                                          backgroundImage: `url(${backgroundImage})`,
+                                      }
                                     : undefined
                             }
                         >
-
                             <div
                                 className={
                                     styles.cardOverlay
                                 }
                             />
 
+                            <div
+                                className={
+                                    styles.cardGlow
+                                }
+                            />
 
                             <div
                                 className={
                                     styles.cardInner
                                 }
                             >
-
-                                {/* PROFILE IMAGE */}
-
                                 <div
                                     className={
                                         styles.cardAvatar
                                     }
                                 >
-
                                     {avatarImage ? (
                                         <img
-                                            src={
-                                                avatarImage
-                                            }
+                                            src={avatarImage}
                                             alt={
                                                 card.name ||
                                                 "Profile"
@@ -1032,30 +840,32 @@ const Builder = () => {
                                         >
                                             {card.name
                                                 ? card.name
-                                                    .charAt(
-                                                        0
-                                                    )
-                                                    .toUpperCase()
+                                                      .charAt(
+                                                          0
+                                                      )
+                                                      .toUpperCase()
                                                 : "R"}
                                         </span>
                                     )}
-
                                 </div>
-
-
-                                {/* MAIN CONTENT */}
 
                                 <div
                                     className={
                                         styles.cardMain
                                     }
                                 >
-
                                     <div
                                         className={
                                             styles.identity
                                         }
                                     >
+                                        <span
+                                            className={
+                                                styles.cardEyebrow
+                                            }
+                                        >
+                                            PROFESSIONAL IDENTITY
+                                        </span>
 
                                         <h2>
                                             {card.name ||
@@ -1067,125 +877,99 @@ const Builder = () => {
                                                 "Your Role"}
                                         </p>
 
-                                        <span>
+                                        <span
+                                            className={
+                                                styles.cardBio
+                                            }
+                                        >
                                             {card.bio ||
                                                 "Your professional bio will appear here."}
                                         </span>
-
                                     </div>
-
 
                                     <div
                                         className={
                                             styles.cardSkills
                                         }
                                     >
-
-                                        {card.skills
-                                            .length >
-                                            0 ? (
-                                            card.skills.map(
-                                                (
-                                                    skill
-                                                ) => (
-                                                    <span
-                                                        key={
-                                                            skill
-                                                        }
-                                                    >
-                                                        {
-                                                            skill
-                                                        }
-                                                    </span>
-                                                )
+                                        {displaySkills.map(
+                                            (skill) => (
+                                                <span
+                                                    key={skill}
+                                                >
+                                                    {skill}
+                                                </span>
                                             )
-                                        ) : (
-                                            <>
-                                                <span>
-                                                    React
-                                                </span>
-
-                                                <span>
-                                                    Node.js
-                                                </span>
-
-                                                <span>
-                                                    MongoDB
-                                                </span>
-                                            </>
                                         )}
-
                                     </div>
-
 
                                     <div
                                         className={
                                             styles.cardFooter
                                         }
                                     >
-
                                         <div
                                             className={
                                                 styles.socialLinks
                                             }
                                         >
-
-                                            {card.github && (
+                                            {card.github ? (
                                                 <a
                                                     href={
                                                         card.github
                                                     }
                                                     target="_blank"
                                                     rel="noreferrer"
+                                                    onClick={(e) =>
+                                                        e.stopPropagation()
+                                                    }
                                                 >
                                                     GitHub
                                                 </a>
+                                            ) : (
+                                                <span>
+                                                    GitHub
+                                                </span>
                                             )}
 
-                                            {card.linkedin && (
+                                            {card.linkedin ? (
                                                 <a
                                                     href={
                                                         card.linkedin
                                                     }
                                                     target="_blank"
                                                     rel="noreferrer"
+                                                    onClick={(e) =>
+                                                        e.stopPropagation()
+                                                    }
                                                 >
                                                     LinkedIn
                                                 </a>
+                                            ) : (
+                                                <span>
+                                                    LinkedIn
+                                                </span>
                                             )}
 
-                                            {card.portfolio && (
+                                            {card.portfolio ? (
                                                 <a
                                                     href={
                                                         card.portfolio
                                                     }
                                                     target="_blank"
                                                     rel="noreferrer"
+                                                    onClick={(e) =>
+                                                        e.stopPropagation()
+                                                    }
                                                 >
                                                     Portfolio
                                                 </a>
+                                            ) : (
+                                                <span>
+                                                    Portfolio
+                                                </span>
                                             )}
-
-                                            {!card.github &&
-                                                !card.linkedin &&
-                                                !card.portfolio && (
-                                                    <>
-                                                        <span>
-                                                            GitHub
-                                                        </span>
-
-                                                        <span>
-                                                            LinkedIn
-                                                        </span>
-
-                                                        <span>
-                                                            Portfolio
-                                                        </span>
-                                                    </>
-                                                )}
-
                                         </div>
-
 
                                         <button
                                             type="button"
@@ -1195,62 +979,77 @@ const Builder = () => {
                                         >
                                             Message
                                         </button>
-
                                     </div>
-
                                 </div>
-
                             </div>
-
                         </div>
-
-
-                        {/* =================================================
-                            ACTION BUTTONS
-                        ================================================= */}
 
                         <div
                             className={
-                                styles.cardActions
+                                styles.previewCaption
                             }
                         >
+                            <span>
+                                INSTACARD / IDENTITY SYSTEM
+                            </span>
 
-                            <button
-                                type="button"
-                                className={
-                                    styles.downloadButton
-                                }
-                                onClick={
-                                    downloadCard
-                                }
-                            >
-                                ↓ Download JPG
-                            </button>
-
-
-                            <button
-                                type="button"
-                                className={
-                                    styles.publishButton
-                                }
-                                onClick={
-                                    saveAndPushToLobby
-                                }
-                                disabled={saving}
-                            >
-                                {saving
-                                    ? "Publishing..."
-                                    : "✓ Save & Push to Lobby"}
-                            </button>
-
+                            <span>
+                                {card.name
+                                    ? "READY TO PUBLISH"
+                                    : "START WITH YOUR NAME"}
+                            </span>
                         </div>
-
                     </div>
 
-                </section>
+                    {/* =================================================
+                        ACTIONS
+                    ================================================= */}
 
+                    <div className={styles.cardActions}>
+                        <button
+                            type="button"
+                            className={
+                                styles.downloadButton
+                            }
+                            onClick={downloadCard}
+                        >
+                            <span>↓</span>
+                            Download JPG
+                        </button>
+
+                        <button
+                            type="button"
+                            className={
+                                styles.publishButton
+                            }
+                            onClick={
+                                saveAndPushToLobby
+                            }
+                            disabled={saving}
+                        >
+                            <span>
+                                {saving ? "◌" : "↗"}
+                            </span>
+
+                            {saving
+                                ? "Publishing..."
+                                : "Publish to Lobby"}
+                        </button>
+                    </div>
+                </section>
             </main>
 
+            {/* =====================================================
+                FOOTER
+            ===================================================== */}
+
+            <footer className={styles.footer}>
+                <span>INSTACARD © 2026</span>
+
+                <span>
+                    BUILD SOMETHING WORTH REMEMBERING.
+                </span>
+            </footer>
         </div>
     );
 };

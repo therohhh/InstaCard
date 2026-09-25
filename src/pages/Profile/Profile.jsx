@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import html2canvas from "html2canvas";
 
 import styles from "./Profile.module.css";
 import InstaCard from "../../components/card/InstaCard";
@@ -8,12 +9,17 @@ const Profile = () => {
     const { id } = useParams();
     const navigate = useNavigate();
 
+    const cardRef = useRef(null);
+
     const [card, setCard] = useState(null);
+    const [currentUser, setCurrentUser] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
+    const [copied, setCopied] = useState(false);
+    const [downloading, setDownloading] = useState(false);
 
     useEffect(() => {
-        const fetchCard = async () => {
+        const fetchProfile = async () => {
             const token = localStorage.getItem("token");
 
             if (!token) {
@@ -22,29 +28,58 @@ const Profile = () => {
             }
 
             try {
-                const response = await fetch(
-                    `http://localhost:5000/api/cards/${id}`,
-                    {
-                        headers: {
-                            Authorization: `Bearer ${token}`,
-                        },
-                    }
-                );
+                const [profileResponse, meResponse] =
+                    await Promise.all([
+                        fetch(
+                            `http://localhost:5000/api/cards/${id}`,
+                            {
+                                headers: {
+                                    Authorization: `Bearer ${token}`,
+                                },
+                            }
+                        ),
+                        fetch(
+                            "http://localhost:5000/api/auth/me",
+                            {
+                                headers: {
+                                    Authorization: `Bearer ${token}`,
+                                },
+                            }
+                        ),
+                    ]);
 
-                const data = await response.json();
+                const profileData =
+                    await profileResponse.json();
 
-                if (!response.ok) {
+                const meData = await meResponse.json();
+
+                if (
+                    profileResponse.status === 401 ||
+                    meResponse.status === 401
+                ) {
+                    localStorage.removeItem("token");
+                    localStorage.removeItem("user");
+                    navigate("/login");
+                    return;
+                }
+
+                if (!profileResponse.ok) {
                     setError(
-                        data.message || "Card not found."
+                        profileData.message ||
+                            "Card not found."
                     );
                     return;
                 }
 
-                setCard(data.card);
-            } catch (error) {
+                setCard(profileData.card);
+
+                if (meResponse.ok) {
+                    setCurrentUser(meData.user);
+                }
+            } catch (err) {
                 console.error(
                     "Profile loading error:",
-                    error
+                    err
                 );
 
                 setError(
@@ -55,8 +90,87 @@ const Profile = () => {
             }
         };
 
-        fetchCard();
+        fetchProfile();
     }, [id, navigate]);
+
+    const isOwner = useMemo(() => {
+        if (!card || !currentUser) {
+            return false;
+        }
+
+        const cardUserId =
+            typeof card.user === "object"
+                ? card.user?._id
+                : card.user;
+
+        return (
+            String(cardUserId) ===
+            String(currentUser._id)
+        );
+    }, [card, currentUser]);
+
+    const profileUrl = window.location.href;
+
+    const copyProfileLink = async () => {
+        try {
+            await navigator.clipboard.writeText(
+                profileUrl
+            );
+
+            setCopied(true);
+
+            setTimeout(() => {
+                setCopied(false);
+            }, 2000);
+        } catch (err) {
+            console.error(
+                "Copy failed:",
+                err
+            );
+        }
+    };
+
+    const downloadCard = async () => {
+        if (!cardRef.current || downloading) {
+            return;
+        }
+
+        try {
+            setDownloading(true);
+
+            const canvas = await html2canvas(
+                cardRef.current,
+                {
+                    backgroundColor: "#101010",
+                    scale: 2,
+                    useCORS: true,
+                }
+            );
+
+            const link =
+                document.createElement("a");
+
+            link.download = `${
+                card.name
+                    ?.toLowerCase()
+                    .replace(/[^a-z0-9]+/g, "-")
+                    .replace(/^-|-$/g, "") ||
+                "instacard"
+            }-instacard.png`;
+
+            link.href =
+                canvas.toDataURL("image/png");
+
+            link.click();
+        } catch (err) {
+            console.error(
+                "Card download failed:",
+                err
+            );
+        } finally {
+            setDownloading(false);
+        }
+    };
 
     /* =========================================================
        LOADING
@@ -65,8 +179,15 @@ const Profile = () => {
     if (loading) {
         return (
             <main className={styles.profile}>
-                <div className={styles.loading}>
-                    LOADING PROFILE
+                <div className={styles.loadingScreen}>
+                    <div className={styles.loadingMark}>
+                        IC
+                    </div>
+
+                    <div className={styles.loadingText}>
+                        <span />
+                        LOADING PROFILE
+                    </div>
                 </div>
             </main>
         );
@@ -79,56 +200,57 @@ const Profile = () => {
     if (error || !card) {
         return (
             <main className={styles.profile}>
-                <div className={styles.error}>
-                    <span>404</span>
+                <div className={styles.errorScreen}>
+                    <span className={styles.errorCode}>
+                        404
+                    </span>
 
-                    <h1>
-                        PROFILE NOT FOUND
-                    </h1>
+                    <div>
+                        <p>THE CARD DOESN'T EXIST</p>
+
+                        <h1>
+                            PROFILE
+                            <br />
+                            NOT FOUND
+                        </h1>
+                    </div>
 
                     <button
+                        type="button"
                         onClick={() =>
                             navigate("/lobby")
                         }
                     >
-                        ← BACK TO LOBBY
+                        ← BACK TO NETWORK
                     </button>
                 </div>
             </main>
         );
     }
 
-    /* =========================================================
-       PROFILE
-    ========================================================= */
+    const cardId =
+        card._id?.slice(-4)?.toUpperCase() ||
+        "----";
 
     return (
         <main className={styles.profile}>
             {/* =================================================
-                NAVIGATION
+                AMBIENT BACKGROUND
             ================================================= */}
 
-            <nav className={styles.nav}>
-                <button
-                    onClick={() =>
-                        navigate("/lobby")
-                    }
-                >
-                    ← LOBBY
-                </button>
+            <div
+                className={
+                    styles.backgroundGrid
+                }
+            />
 
-                <span>
-                    INSTACARD®
-                </span>
+            <div
+                className={`${styles.backgroundGlow} ${styles.glowOne}`}
+            />
 
-                <span>
-                    PROFILE / {card._id.slice(-4)}
-                </span>
-            </nav>
-
-            {/* =================================================
-                AMBIENT SCENE
-            ================================================= */}
+            <div
+                className={`${styles.backgroundGlow} ${styles.glowTwo}`}
+            />
 
             <div className={styles.scene}>
                 <div
@@ -143,56 +265,211 @@ const Profile = () => {
             </div>
 
             {/* =================================================
-                PROFILE CONTENT
+                NAVIGATION
             ================================================= */}
 
-            <section className={styles.content}>
-                <div className={styles.index}>
-                    <span>
-                        INSTA
+            <nav className={styles.nav}>
+                <button
+                    type="button"
+                    className={styles.backButton}
+                    onClick={() =>
+                        navigate("/lobby")
+                    }
+                >
+                    <span>←</span>
+                    LOBBY
+                </button>
+
+                <div className={styles.logo}>
+                    <span className={styles.logoMark}>
+                        IC
                     </span>
 
-                    <span>
-                        CARD
-                    </span>
-
-                    <strong>
-                        /{card._id.slice(-4)}
-                    </strong>
+                    <span>INSTACARD®</span>
                 </div>
 
-                {/* =================================================
-                    INSTACARD
-                ================================================= */}
+                <div className={styles.navMeta}>
+                    <span>PROFILE</span>
+                    <strong>/{cardId}</strong>
+                </div>
+            </nav>
 
-                <div className={styles.cardWrapper}>
+            {/* =================================================
+                HERO
+            ================================================= */}
+
+            <section className={styles.hero}>
+                <div className={styles.heroTop}>
+                    <div className={styles.heroIndex}>
+                        <span>01</span>
+                        <span>IDENTITY</span>
+                    </div>
+
+                    <div className={styles.liveIndicator}>
+                        <span />
+                        PUBLIC PROFILE
+                    </div>
+                </div>
+
+                <div className={styles.identity}>
+                    <div className={styles.identityNumber}>
+                        {cardId}
+                    </div>
+
+                    <div className={styles.identityContent}>
+                        <p className={styles.role}>
+                            {card.role ||
+                                "CREATIVE PROFESSIONAL"}
+                        </p>
+
+                        <h1>
+                            {card.name ||
+                                "Your Name"}
+                        </h1>
+
+                        <div
+                            className={
+                                styles.identityLine
+                            }
+                        >
+                            <span />
+                            <p>
+                                {card.bio ||
+                                    "Building ideas, creating connections and exploring what comes next."}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            {/* =================================================
+                CARD SECTION
+            ================================================= */}
+
+            <section className={styles.cardSection}>
+                <div className={styles.sectionHeader}>
+                    <div>
+                        <span>02</span>
+                        <p>INSTA CARD</p>
+                    </div>
+
+                    <span>
+                        DIGITAL IDENTITY / {cardId}
+                    </span>
+                </div>
+
+                <div
+                    ref={cardRef}
+                    className={styles.cardWrapper}
+                >
                     <InstaCard card={card} />
                 </div>
 
-                {/* =================================================
-                    PROFILE INFORMATION
-                ================================================= */}
+                <div className={styles.cardActions}>
+                    <button
+                        type="button"
+                        onClick={downloadCard}
+                        disabled={downloading}
+                        className={
+                            styles.secondaryAction
+                        }
+                    >
+                        {downloading
+                            ? "GENERATING..."
+                            : "DOWNLOAD CARD"}
+                        <span>↓</span>
+                    </button>
 
-                <div className={styles.profileInfo}>
-                    <div className={styles.bio}>
+                    <button
+                        type="button"
+                        onClick={copyProfileLink}
+                        className={
+                            styles.primaryAction
+                        }
+                    >
+                        {copied
+                            ? "LINK COPIED"
+                            : "COPY PROFILE LINK"}
                         <span>
-                            ABOUT
+                            {copied ? "✓" : "↗"}
                         </span>
+                    </button>
 
-                        <p>
+                    {isOwner && (
+                        <button
+                            type="button"
+                            onClick={() =>
+                                navigate("/builder")
+                            }
+                            className={
+                                styles.editAction
+                            }
+                        >
+                            EDIT CARD
+                            <span>→</span>
+                        </button>
+                    )}
+                </div>
+            </section>
+
+            {/* =================================================
+                INFORMATION
+            ================================================= */}
+
+            <section className={styles.infoSection}>
+                <div className={styles.sectionHeader}>
+                    <div>
+                        <span>03</span>
+                        <p>PROFILE DATA</p>
+                    </div>
+
+                    <span>
+                        ABOUT / EXPERTISE / LINKS
+                    </span>
+                </div>
+
+                <div className={styles.infoGrid}>
+                    {/* ABOUT */}
+
+                    <article
+                        className={
+                            styles.infoBlock
+                        }
+                    >
+                        <div
+                            className={
+                                styles.blockLabel
+                            }
+                        >
+                            <span>01</span>
+                            ABOUT
+                        </div>
+
+                        <p
+                            className={
+                                styles.aboutText
+                            }
+                        >
                             {card.bio ||
                                 "Building ideas, creating connections and exploring what comes next."}
                         </p>
-                    </div>
+                    </article>
 
-                    <div
+                    {/* EXPERTISE */}
+
+                    <article
                         className={
-                            styles.expertise
+                            styles.infoBlock
                         }
                     >
-                        <span>
+                        <div
+                            className={
+                                styles.blockLabel
+                            }
+                        >
+                            <span>02</span>
                             EXPERTISE
-                        </span>
+                        </div>
 
                         <div
                             className={
@@ -208,7 +485,9 @@ const Profile = () => {
                                                 skill
                                             }
                                         >
-                                            {skill}
+                                            {
+                                                skill
+                                            }
                                         </span>
                                     )
                                 )
@@ -218,68 +497,109 @@ const Profile = () => {
                                 </span>
                             )}
                         </div>
-                    </div>
-                </div>
+                    </article>
 
-                {/* =================================================
-                    SOCIAL LINKS
-                ================================================= */}
+                    {/* CONNECT */}
 
-                {(card.github ||
-                    card.linkedin ||
-                    card.portfolio) && (
-                    <div
-                        className={styles.links}
+                    <article
+                        className={
+                            styles.infoBlock
+                        }
                     >
-                        {card.github && (
-                            <a
-                                href={
-                                    card.github
-                                }
-                                target="_blank"
-                                rel="noreferrer"
-                            >
-                                GITHUB ↗
-                            </a>
-                        )}
+                        <div
+                            className={
+                                styles.blockLabel
+                            }
+                        >
+                            <span>03</span>
+                            CONNECT
+                        </div>
 
-                        {card.linkedin && (
-                            <a
-                                href={
-                                    card.linkedin
-                                }
-                                target="_blank"
-                                rel="noreferrer"
-                            >
-                                LINKEDIN ↗
-                            </a>
-                        )}
+                        <div
+                            className={
+                                styles.socialLinks
+                            }
+                        >
+                            {card.github && (
+                                <a
+                                    href={
+                                        card.github
+                                    }
+                                    target="_blank"
+                                    rel="noreferrer"
+                                >
+                                    <span>
+                                        GITHUB
+                                    </span>
+                                    ↗
+                                </a>
+                            )}
 
-                        {card.portfolio && (
-                            <a
-                                href={
-                                    card.portfolio
-                                }
-                                target="_blank"
-                                rel="noreferrer"
-                            >
-                                PORTFOLIO ↗
-                            </a>
-                        )}
-                    </div>
-                )}
+                            {card.linkedin && (
+                                <a
+                                    href={
+                                        card.linkedin
+                                    }
+                                    target="_blank"
+                                    rel="noreferrer"
+                                >
+                                    <span>
+                                        LINKEDIN
+                                    </span>
+                                    ↗
+                                </a>
+                            )}
+
+                            {card.portfolio && (
+                                <a
+                                    href={
+                                        card.portfolio
+                                    }
+                                    target="_blank"
+                                    rel="noreferrer"
+                                >
+                                    <span>
+                                        PORTFOLIO
+                                    </span>
+                                    ↗
+                                </a>
+                            )}
+
+                            {!card.github &&
+                                !card.linkedin &&
+                                !card.portfolio && (
+                                    <p
+                                        className={
+                                            styles.noLinks
+                                        }
+                                    >
+                                        NO PUBLIC LINKS
+                                        ADDED
+                                    </p>
+                                )}
+                        </div>
+                    </article>
+                </div>
             </section>
 
             {/* =================================================
-                BOTTOM
+                FOOTER
             ================================================= */}
 
-            <div className={styles.bottom}>
-                <span>
-                    CONNECTED THROUGH INSTACARD
-                </span>
+            <footer className={styles.bottom}>
+                <div>
+                    <span>
+                        INSTACARD®
+                    </span>
+
+                    <p>
+                        CONNECTED THROUGH
+                        DIGITAL IDENTITY
+                    </p>
+                </div>
 
                 <button
+                    type="button"
                     onClick={() =>
                         navigate("/lobby")
                     }
@@ -287,7 +607,7 @@ const Profile = () => {
                     BACK TO NETWORK
                     <span>↗</span>
                 </button>
-            </div>
+            </footer>
         </main>
     );
 };
