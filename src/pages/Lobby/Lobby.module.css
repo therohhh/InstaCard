@@ -43,22 +43,16 @@
     pointer-events: none;
     opacity: 0.48;
     background-image:
-        linear-gradient(
+        linear-gradient(rgba(0, 0, 0, 0.035) 1px,
+            transparent 1px),
+        linear-gradient(90deg,
             rgba(0, 0, 0, 0.035) 1px,
-            transparent 1px
-        ),
-        linear-gradient(
-            90deg,
-            rgba(0, 0, 0, 0.035) 1px,
-            transparent 1px
-        );
+            transparent 1px);
     background-size: 80px 80px;
-    mask-image: linear-gradient(
-        to bottom,
-        black 0%,
-        rgba(0, 0, 0, 0.75) 45%,
-        transparent 100%
-    );
+    mask-image: linear-gradient(to bottom,
+            black 0%,
+            rgba(0, 0, 0, 0.75) 45%,
+            transparent 100%);
 }
 
 
@@ -113,11 +107,9 @@
     top: 48%;
     z-index: -2;
     border-radius: 50%;
-    background: radial-gradient(
-        circle,
-        rgba(255, 255, 255, 0.95) 0%,
-        rgba(255, 255, 255, 0) 70%
-    );
+    background: radial-gradient(circle,
+            rgba(255, 255, 255, 0.95) 0%,
+            rgba(255, 255, 255, 0) 70%);
     pointer-events: none;
 }
 
@@ -341,7 +333,7 @@
     perspective: 1200px;
 }
 
-.myCardPreview > div {
+.myCardPreview>div {
     width: 100%;
 }
 
@@ -420,11 +412,9 @@
     justify-content: center;
     border: 1px dashed rgba(0, 0, 0, 0.2);
     background:
-        linear-gradient(
-            135deg,
+        linear-gradient(135deg,
             rgba(255, 255, 255, 0.6),
-            rgba(255, 255, 255, 0.2)
-        );
+            rgba(255, 255, 255, 0.2));
     overflow: hidden;
 }
 
@@ -439,36 +429,76 @@
     font-weight: 200;
 }
 
-.createPanel h3 {
+.createPanel h2 {
     position: relative;
-    margin: 0 0 12px;
-    font-size: 25px;
-    letter-spacing: -0.04em;
+    margin: 0;
+    color: #111;
+    font-size: clamp(38px, 4vw, 58px);
+    line-height: 0.92;
+    letter-spacing: -0.055em;
+    font-weight: 800;
 }
 
 .createPanel p {
     position: relative;
     max-width: 300px;
-    margin: 0;
+    margin: 14px 0 0;
     color: rgba(0, 0, 0, 0.48);
     font-size: 11px;
     line-height: 1.7;
 }
 
-.createPanel a {
+.createPanel button {
     position: relative;
+
     width: fit-content;
-    margin-top: 25px;
-    padding-bottom: 5px;
-    border-bottom: 1px solid #111;
-    color: #111;
+    min-height: 46px;
+
+    margin-top: 28px;
+    padding: 0 20px;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+
+    border: 1px solid rgba(0, 0, 0, 0.2);
+    border-radius: 5px;
+
+    background: #111;
+    color: #fff;
+
+    font-family: inherit;
     font-size: 9px;
     font-weight: 800;
-    letter-spacing: 0.12em;
-    text-decoration: none;
+    letter-spacing: 0.13em;
     text-transform: uppercase;
+
+    cursor: pointer;
+
+    transition:
+        background 0.25s ease,
+        color 0.25s ease,
+        border-color 0.25s ease,
+        transform 0.25s ease;
 }
 
+.createPanel button span {
+    display: inline-flex;
+    font-size: 13px;
+    transition: transform 0.25s ease;
+}
+
+.createPanel button:hover {
+    background: transparent;
+    color: #111;
+    border-color: #111;
+    transform: translateY(-3px);
+}
+
+.createPanel button:hover span {
+    transform: translate(3px, -3px);
+}
 
 /* =========================================================
    NETWORK / DISCOVERY
@@ -682,11 +712,9 @@
     border: 1px solid rgba(0, 0, 0, 0.11);
     border-radius: 12px;
     background:
-        linear-gradient(
-            145deg,
+        linear-gradient(145deg,
             rgba(255, 255, 255, 0.7),
-            rgba(255, 255, 255, 0.28)
-        );
+            rgba(255, 255, 255, 0.28));
     box-shadow:
         0 12px 35px rgba(0, 0, 0, 0.035);
     cursor: pointer;
@@ -704,11 +732,9 @@
     inset: 0;
     pointer-events: none;
     background:
-        linear-gradient(
-            120deg,
+        linear-gradient(120deg,
             rgba(255, 255, 255, 0.35),
-            transparent 35%
-        );
+            transparent 35%);
     opacity: 0;
     transition: opacity 0.4s ease;
 }
@@ -751,11 +777,11 @@
     perspective: 1400px;
 }
 
-.cardPreview > div {
+.cardPreview>div {
     width: 100%;
 }
 
-.networkCard:hover .cardPreview > div {
+.networkCard:hover .cardPreview>div {
     transform: translateY(-2px);
 }
 
@@ -1057,6 +1083,7 @@
    ========================================================= */
 
 @media (max-width: 1100px) {
+
     .nav,
     .hero,
     .myCardSection,
@@ -1248,6 +1275,16 @@
         padding: 25px;
     }
 
+    .createPanel h2 {
+        font-size: 38px;
+    }
+
+    .createPanel button {
+        width: 100%;
+        min-height: 44px;
+        margin-top: 24px;
+    }
+
     .networkIntro {
         margin-bottom: 38px;
     }
@@ -1344,6 +1381,7 @@
    ========================================================= */
 
 @media (max-width: 420px) {
+
     .nav,
     .hero,
     .myCardSection,
@@ -1393,6 +1431,7 @@
    ========================================================= */
 
 @media (prefers-reduced-motion: reduce) {
+
     .orbitRing,
     .orbitRingInner,
     .loader {
@@ -1414,5 +1453,416 @@
     .actionGroup button {
         transition: none;
         transform: none;
+    }
+}
+
+/* =========================================================
+   LOGOUT CONFIRMATION MODAL
+========================================================= */
+
+.logoutOverlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 24px;
+
+    background: rgba(0, 0, 0, 0.72);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+
+    animation: logoutOverlayIn 0.25s ease forwards;
+}
+
+.logoutModal {
+    position: relative;
+
+    width: min(440px, 100%);
+
+    background: #f5f5f0;
+    border: 1px solid rgba(0, 0, 0, 0.14);
+
+    box-shadow:
+        0 30px 80px rgba(0, 0, 0, 0.35);
+
+    animation: logoutModalIn 0.3s ease forwards;
+}
+
+.logoutModalTop {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    padding: 16px 20px;
+
+    border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+}
+
+.logoutModalTop span:last-child {
+    font-size: 18px;
+    font-weight: 400;
+    line-height: 1;
+}
+
+.logoutModalContent {
+    padding: 38px 32px 30px;
+}
+
+.logoutModalNumber {
+    display: block;
+
+    margin-bottom: 16px;
+
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+
+    opacity: 0.45;
+}
+
+.logoutModalContent h2 {
+    margin: 0 0 12px;
+
+    font-size: clamp(36px, 7vw, 52px);
+    font-weight: 800;
+    line-height: 0.95;
+    letter-spacing: -0.05em;
+}
+
+.logoutModalContent p {
+    margin: 0;
+
+    font-size: 14px;
+    line-height: 1.6;
+
+    color: rgba(0, 0, 0, 0.58);
+}
+
+.logoutModalActions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+
+    border-top: 1px solid rgba(0, 0, 0, 0.12);
+}
+
+.cancelButton,
+.confirmLogoutButton {
+    min-height: 58px;
+
+    border: 0;
+    border-radius: 0;
+
+    font-family: inherit;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+
+    cursor: pointer;
+
+    transition:
+        background 0.2s ease,
+        color 0.2s ease;
+}
+
+.cancelButton {
+    background: transparent;
+    color: #111;
+    border-right: 1px solid rgba(0, 0, 0, 0.12);
+}
+
+.cancelButton:hover {
+    background: rgba(0, 0, 0, 0.06);
+}
+
+.confirmLogoutButton {
+    background: #d62828;
+    color: #fff;
+}
+
+.confirmLogoutButton:hover {
+    background: #b91f1f;
+}
+
+@keyframes logoutOverlayIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes logoutModalIn {
+    from {
+        opacity: 0;
+        transform: translateY(16px) scale(0.97);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@media (max-width: 520px) {
+    .logoutOverlay {
+        padding: 18px;
+    }
+
+    .logoutModalContent {
+        padding: 30px 24px 26px;
+    }
+
+    .logoutModalActions {
+        grid-template-columns: 1fr;
+    }
+
+    .cancelButton {
+        border-right: 0;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+    }
+}
+
+.networkCard {
+    will-change: transform;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.networkCard:hover {
+    transform: translateY(-10px);
+}
+
+.networkCard:active {
+    transform: translateY(-5px) scale(0.995);
+}
+
+.networkCard:focus-visible {
+    outline: 2px solid #111;
+    outline-offset: 5px;
+}
+
+.networkCard .cardPreview {
+    transition:
+        transform 0.45s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.networkCard:hover .cardPreview {
+    transform: translateY(-3px);
+}
+
+.networkCard .networkCardMeta {
+    transition:
+        transform 0.35s ease;
+}
+
+.networkCard:hover .networkCardMeta {
+    transform: translateY(-2px);
+}
+
+.networkCard .cardArrow {
+    will-change: transform;
+}
+
+.networkCard:hover .cardArrow {
+    transform: translate(4px, -4px);
+}
+
+/* =========================================================
+   TOUCH DEVICES
+   ========================================================= */
+
+@media (hover: none) {
+    .networkCard:hover {
+        transform: none;
+        box-shadow:
+            0 12px 35px rgba(0, 0, 0, 0.035);
+    }
+
+    .networkCard:hover .cardPreview {
+        transform: none;
+    }
+
+    .networkCard:hover .networkCardMeta {
+        transform: none;
+    }
+
+    .networkCard:hover .cardArrow {
+        transform: none;
+        background: transparent;
+        color: #111;
+    }
+
+    .networkCard:active {
+        transform: scale(0.99);
+    }
+
+    .cursorPreview {
+        display: none !important;
+    }
+}
+
+/* =========================================================
+   REDUCED MOTION — INTERACTION OVERRIDE
+   ========================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+    .networkCard,
+    .networkCard:hover,
+    .networkCard:active,
+    .networkCard .cardPreview,
+    .networkCard:hover .cardPreview,
+    .networkCard .networkCardMeta,
+    .networkCard:hover .networkCardMeta,
+    .networkCard .cardArrow,
+    .networkCard:hover .cardArrow {
+        transform: none;
+        transition: none;
+    }
+}
+
+/* =========================================================
+   DAY 2 — FINAL MOBILE POLISH
+   ========================================================= */
+
+@media (max-width: 650px) {
+    /* Prevent accidental horizontal overflow */
+    .lobby {
+        width: 100%;
+        overflow-x: hidden;
+    }
+
+    /* Keep navigation items inside the viewport */
+    .nav {
+        gap: 12px;
+    }
+
+    .brand {
+        min-width: 0;
+        white-space: nowrap;
+    }
+
+    .navRight {
+        min-width: 0;
+        flex-shrink: 0;
+    }
+
+    /* Better search control on narrow screens */
+    .searchBox {
+        padding: 0 2px;
+    }
+
+    .searchBox input {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    /* Let filter row scroll naturally with touch */
+    .filterBar {
+        max-width: 100%;
+        overscroll-behavior-x: contain;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    /* Prevent long card metadata from breaking layout */
+    .networkCardMeta {
+        min-width: 0;
+    }
+
+    .networkCardMeta span {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    /* Make buttons comfortable for touch */
+    .actionGroup a,
+    .actionGroup button,
+    .emptyButton,
+    .createPanel button {
+        min-height: 44px;
+    }
+
+    /* Better empty/loading states on phones */
+    .empty,
+    .loading {
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    /* Keep card preview within viewport */
+    .cardPreview,
+    .myCardPreview {
+        max-width: 100%;
+        overflow: hidden;
+    }
+}
+
+@media (max-width: 420px) {
+    .nav {
+        gap: 8px;
+    }
+
+    .navRight {
+        gap: 7px;
+    }
+
+    .navRight button {
+        padding: 0;
+    }
+
+    .heroMeta span {
+        font-size: 8px;
+    }
+
+    .heroDescription {
+        max-width: 270px;
+    }
+
+    .resultsMeta {
+        width: 100%;
+    }
+
+    .resultsMeta button {
+        min-height: 32px;
+    }
+
+    .networkCardMeta span {
+        max-width: 75%;
+    }
+}
+
+@media (hover: none) and (pointer: coarse) {
+    .networkCard {
+        cursor: pointer;
+    }
+
+    .filterButton,
+    .clearSearch,
+    .actionGroup a,
+    .actionGroup button,
+    .createPanel button,
+    .emptyButton,
+    .navRight button {
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    .filterButton:active,
+    .clearSearch:active,
+    .actionGroup a:active,
+    .actionGroup button:active,
+    .createPanel button:active,
+    .emptyButton:active {
+        transform: scale(0.98);
     }
 }

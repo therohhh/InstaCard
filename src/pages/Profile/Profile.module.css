@@ -1,3 +1,7 @@
+/* =========================================================
+   PROFILE — PREMIUM DIGITAL IDENTITY
+========================================================= */
+
 .profile {
     position: relative;
     min-height: 100vh;
@@ -15,8 +19,10 @@
 .backgroundGrid {
     position: fixed;
     inset: 0;
+    z-index: 0;
     pointer-events: none;
     opacity: 0.32;
+
     background-image:
         linear-gradient(
             rgba(255, 255, 255, 0.035) 1px,
@@ -27,7 +33,9 @@
             rgba(255, 255, 255, 0.035) 1px,
             transparent 1px
         );
+
     background-size: 80px 80px;
+
     mask-image: linear-gradient(
         to bottom,
         black,
@@ -37,9 +45,13 @@
 
 .backgroundGlow {
     position: fixed;
+    z-index: 0;
+
     width: 500px;
     height: 500px;
+
     border-radius: 50%;
+
     pointer-events: none;
     filter: blur(100px);
     opacity: 0.08;
@@ -77,9 +89,11 @@
 .backButton {
     justify-self: start;
 
-    display: flex;
+    display: inline-flex;
     align-items: center;
     gap: 12px;
+
+    padding: 0;
 
     border: 0;
     background: transparent;
@@ -88,7 +102,8 @@
 
     font-family: inherit;
     font-size: 9px;
-    letter-spacing: 2px;
+    font-weight: 700;
+    letter-spacing: 0.2em;
 
     cursor: pointer;
 
@@ -118,7 +133,8 @@
     color: #ffffff;
 
     font-size: 9px;
-    letter-spacing: 3px;
+    font-weight: 700;
+    letter-spacing: 0.3em;
 }
 
 .logoMark {
@@ -144,7 +160,8 @@
     color: #666;
 
     font-size: 8px;
-    letter-spacing: 2px;
+    font-weight: 700;
+    letter-spacing: 0.2em;
 }
 
 .navMeta strong {
@@ -183,7 +200,8 @@
     color: #666;
 
     font-size: 8px;
-    letter-spacing: 3px;
+    font-weight: 700;
+    letter-spacing: 0.3em;
 }
 
 .heroIndex span:first-child {
@@ -198,7 +216,8 @@
     color: #666;
 
     font-size: 8px;
-    letter-spacing: 2px;
+    font-weight: 700;
+    letter-spacing: 0.2em;
 }
 
 .liveIndicator span {
@@ -213,9 +232,13 @@
         0 0 0 4px rgba(255, 255, 255, 0.05);
 }
 
+/* =========================================================
+   IDENTITY
+========================================================= */
+
 .identity {
     display: grid;
-    grid-template-columns: 150px 1fr;
+    grid-template-columns: 150px minmax(0, 1fr);
     gap: 60px;
 
     margin-top: 90px;
@@ -227,7 +250,8 @@
     color: #444;
 
     font-size: 10px;
-    letter-spacing: 3px;
+    font-weight: 700;
+    letter-spacing: 0.3em;
 }
 
 .identityContent {
@@ -240,7 +264,9 @@
     color: #777;
 
     font-size: 9px;
-    letter-spacing: 4px;
+    font-weight: 700;
+    letter-spacing: 0.4em;
+    text-transform: uppercase;
 }
 
 .identityContent h1 {
@@ -248,12 +274,9 @@
 
     max-width: 1100px;
 
-    font-size: clamp(
-        72px,
-        11vw,
-        180px
-    );
+    color: #f5f5f0;
 
+    font-size: clamp(72px, 11vw, 180px);
     line-height: 0.78;
 
     letter-spacing: -0.09em;
@@ -300,6 +323,8 @@
 .scene {
     position: absolute;
     inset: 0;
+
+    z-index: 1;
 
     pointer-events: none;
 
@@ -397,4 +422,870 @@
             rotateZ(0deg);
     }
 
-   
+    to {
+        transform:
+            rotateY(65deg)
+            rotateZ(360deg);
+    }
+}
+
+@keyframes orbFloat {
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-18px);
+    }
+}
+
+/* =========================================================
+   SHARED SECTION HEADER
+========================================================= */
+
+.sectionHeader {
+    position: relative;
+    z-index: 5;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    padding-bottom: 20px;
+
+    border-bottom: 1px solid #292929;
+}
+
+.sectionHeader > div {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.sectionHeader > div > span {
+    color: #777;
+
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.25em;
+}
+
+.sectionHeader p {
+    margin: 0;
+
+    color: #f5f5f0;
+
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: 0.25em;
+}
+
+.sectionHeader > span {
+    color: #555;
+
+    font-size: 8px;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+}
+
+/* =========================================================
+   CARD SECTION
+========================================================= */
+
+.cardSection {
+    position: relative;
+    z-index: 10;
+
+    max-width: 1400px;
+    margin: 0 auto;
+
+    padding: 0 0 130px;
+}
+
+.cardWrapper {
+    width: 100%;
+    margin-top: 55px;
+
+    perspective: 1400px;
+}
+
+.cardWrapper > div {
+    width: 100%;
+}
+
+/* =========================================================
+   CARD ACTIONS
+========================================================= */
+
+.cardActions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+
+    flex-wrap: wrap;
+
+    gap: 10px;
+
+    margin-top: 24px;
+}
+
+.cardActions button {
+    min-height: 44px;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    gap: 18px;
+
+    padding: 0 18px;
+
+    font-family: inherit;
+    font-size: 8px;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+
+    cursor: pointer;
+
+    transition:
+        background 0.25s ease,
+        color 0.25s ease,
+        border-color 0.25s ease,
+        transform 0.25s ease;
+}
+
+.cardActions button span {
+    font-size: 13px;
+
+    transition:
+        transform 0.25s ease;
+}
+
+.secondaryAction {
+    border: 1px solid #333;
+
+    background: transparent;
+    color: #aaa;
+}
+
+.secondaryAction:hover {
+    border-color: #f5f5f0;
+
+    background: #f5f5f0;
+    color: #0a0a0a;
+
+    transform: translateY(-2px);
+}
+
+.secondaryAction:hover span {
+    transform: translateY(2px);
+}
+
+.primaryAction {
+    border: 1px solid #f5f5f0;
+
+    background: #f5f5f0;
+    color: #0a0a0a;
+}
+
+.primaryAction:hover {
+    background: transparent;
+    color: #f5f5f0;
+
+    transform: translateY(-2px);
+}
+
+.primaryAction:hover span {
+    transform: translate(3px, -3px);
+}
+
+.editAction {
+    border: 1px solid #444;
+
+    background: #171717;
+    color: #ffffff;
+}
+
+.editAction:hover {
+    border-color: #ffffff;
+
+    background: #ffffff;
+    color: #0a0a0a;
+
+    transform: translateY(-2px);
+}
+
+.editAction:hover span {
+    transform: translateX(4px);
+}
+
+.cardActions button:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* =========================================================
+   INFORMATION
+========================================================= */
+
+.infoSection {
+    position: relative;
+    z-index: 10;
+
+    max-width: 1400px;
+    margin: 0 auto;
+
+    padding: 0 0 140px;
+}
+
+.infoGrid {
+    display: grid;
+
+    grid-template-columns:
+        repeat(3, minmax(0, 1fr));
+
+    gap: 1px;
+
+    margin-top: 50px;
+
+    background: #292929;
+    border: 1px solid #292929;
+}
+
+.infoBlock {
+    min-height: 270px;
+
+    padding: 30px;
+
+    background: #0a0a0a;
+}
+
+.blockLabel {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+
+    margin-bottom: 40px;
+
+    color: #777;
+
+    font-size: 8px;
+    font-weight: 800;
+    letter-spacing: 0.2em;
+}
+
+.blockLabel span {
+    color: #444;
+}
+
+.aboutText {
+    max-width: 380px;
+
+    margin: 0;
+
+    color: #aaa;
+
+    font-size: 14px;
+    line-height: 1.8;
+}
+
+/* =========================================================
+   SKILLS
+========================================================= */
+
+.skills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+}
+
+.skills span {
+    padding: 8px 11px;
+
+    border: 1px solid #333;
+    border-radius: 999px;
+
+    background: #111;
+
+    color: #bbb;
+
+    font-size: 8px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+/* =========================================================
+   SOCIAL LINKS
+========================================================= */
+
+.socialLinks {
+    display: flex;
+    flex-direction: column;
+
+    gap: 10px;
+}
+
+.socialLinks a {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    padding: 13px 0;
+
+    border-bottom: 1px solid #292929;
+
+    color: #aaa;
+
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: 0.15em;
+
+    text-decoration: none;
+    text-transform: uppercase;
+
+    transition:
+        color 0.25s ease,
+        padding 0.25s ease;
+}
+
+.socialLinks a span {
+    color: #f5f5f0;
+}
+
+.socialLinks a:hover {
+    padding-left: 7px;
+    color: #ffffff;
+}
+
+.noLinks {
+    margin: 0;
+
+    color: #555;
+
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    line-height: 1.7;
+}
+
+/* =========================================================
+   FOOTER
+========================================================= */
+
+.bottom {
+    position: relative;
+    z-index: 10;
+
+    max-width: 1400px;
+    min-height: 150px;
+
+    margin: 0 auto;
+
+    padding: 35px 0;
+
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+
+    gap: 30px;
+
+    border-top: 1px solid #292929;
+}
+
+.bottom > div {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.bottom > div > span {
+    color: #f5f5f0;
+
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: 0.2em;
+}
+
+.bottom p {
+    max-width: 280px;
+
+    margin: 0;
+
+    color: #555;
+
+    font-size: 8px;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    line-height: 1.7;
+}
+
+.bottom button {
+    display: inline-flex;
+    align-items: center;
+    gap: 14px;
+
+    padding: 0;
+
+    border: 0;
+    background: transparent;
+
+    color: #aaa;
+
+    font-family: inherit;
+    font-size: 8px;
+    font-weight: 800;
+    letter-spacing: 0.15em;
+
+    cursor: pointer;
+
+    transition:
+        color 0.25s ease;
+}
+
+.bottom button span {
+    font-size: 13px;
+
+    transition:
+        transform 0.25s ease;
+}
+
+.bottom button:hover {
+    color: #ffffff;
+}
+
+.bottom button:hover span {
+    transform: translate(3px, -3px);
+}
+
+/* =========================================================
+   LOADING
+========================================================= */
+
+.loadingScreen {
+    min-height: 100vh;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    flex-direction: column;
+
+    gap: 20px;
+}
+
+.loadingMark {
+    width: 55px;
+    height: 55px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border: 1px solid #444;
+
+    color: #ffffff;
+
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+
+    animation: loadingPulse 1.4s ease-in-out infinite;
+}
+
+.loadingText {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    color: #666;
+
+    font-size: 8px;
+    font-weight: 800;
+    letter-spacing: 0.2em;
+}
+
+.loadingText span {
+    width: 5px;
+    height: 5px;
+
+    border-radius: 50%;
+
+    background: #ffffff;
+
+    animation: loadingDot 1s ease-in-out infinite;
+}
+
+@keyframes loadingPulse {
+    0%,
+    100% {
+        opacity: 0.5;
+        transform: scale(1);
+    }
+
+    50% {
+        opacity: 1;
+        transform: scale(1.05);
+    }
+}
+
+@keyframes loadingDot {
+    0%,
+    100% {
+        opacity: 0.25;
+    }
+
+    50% {
+        opacity: 1;
+    }
+}
+
+/* =========================================================
+   ERROR
+========================================================= */
+
+.errorScreen {
+    min-height: 100vh;
+
+    display: grid;
+
+    grid-template-columns: auto 1fr auto;
+
+    align-items: center;
+
+    gap: 50px;
+
+    max-width: 1200px;
+
+    margin: 0 auto;
+}
+
+.errorCode {
+    color: #444;
+
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.2em;
+}
+
+.errorScreen p {
+    margin: 0 0 20px;
+
+    color: #666;
+
+    font-size: 8px;
+    font-weight: 800;
+    letter-spacing: 0.2em;
+}
+
+.errorScreen h1 {
+    margin: 0;
+
+    color: #f5f5f0;
+
+    font-size: clamp(50px, 8vw, 110px);
+    line-height: 0.85;
+    letter-spacing: -0.07em;
+}
+
+.errorScreen button {
+    padding: 14px 18px;
+
+    border: 1px solid #444;
+
+    background: transparent;
+
+    color: #aaa;
+
+    font-family: inherit;
+    font-size: 8px;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+
+    cursor: pointer;
+
+    transition:
+        background 0.25s ease,
+        color 0.25s ease;
+}
+
+.errorScreen button:hover {
+    background: #f5f5f0;
+    color: #0a0a0a;
+}
+
+/* =========================================================
+   TABLET
+========================================================= */
+
+@media (max-width: 1000px) {
+    .identity {
+        grid-template-columns: 90px minmax(0, 1fr);
+        gap: 35px;
+    }
+
+    .identityContent h1 {
+        font-size: clamp(62px, 12vw, 130px);
+    }
+
+    .infoGrid {
+        grid-template-columns: 1fr;
+    }
+
+    .infoBlock {
+        min-height: auto;
+    }
+
+    .errorScreen {
+        grid-template-columns: 1fr;
+        gap: 25px;
+
+        padding: 80px 0;
+    }
+}
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 650px) {
+    .profile {
+        padding: 0 18px;
+    }
+
+    .nav {
+        height: 72px;
+
+        grid-template-columns: auto 1fr auto;
+    }
+
+    .logo {
+        justify-self: center;
+
+        font-size: 8px;
+        letter-spacing: 0.2em;
+    }
+
+    .logoMark {
+        width: 22px;
+        height: 22px;
+    }
+
+    .navMeta {
+        font-size: 7px;
+    }
+
+    .navMeta span {
+        display: none;
+    }
+
+    .hero {
+        padding: 65px 0 90px;
+    }
+
+    .heroTop {
+        padding-bottom: 18px;
+    }
+
+    .liveIndicator {
+        font-size: 7px;
+    }
+
+    .identity {
+        display: block;
+
+        margin-top: 60px;
+    }
+
+    .identityNumber {
+        margin-bottom: 22px;
+        padding-top: 0;
+    }
+
+    .identityContent h1 {
+        font-size: clamp(58px, 17vw, 100px);
+        line-height: 0.82;
+    }
+
+    .role {
+        margin-bottom: 20px;
+
+        font-size: 8px;
+        letter-spacing: 0.28em;
+    }
+
+    .identityLine {
+        gap: 15px;
+
+        margin-top: 40px;
+    }
+
+    .identityLine > span {
+        width: 30px;
+    }
+
+    .identityLine p {
+        font-size: 11px;
+        line-height: 1.7;
+    }
+
+    .ringOne {
+        width: 420px;
+        height: 420px;
+
+        top: 300px;
+        right: -240px;
+    }
+
+    .ringTwo {
+        width: 300px;
+        height: 300px;
+
+        top: 400px;
+        right: -130px;
+    }
+
+    .orb {
+        width: 90px;
+        height: 90px;
+
+        top: 480px;
+        right: 50px;
+    }
+
+    .sectionHeader {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .sectionHeader > span {
+        font-size: 7px;
+    }
+
+    .cardSection {
+        padding-bottom: 90px;
+    }
+
+    .cardWrapper {
+        margin-top: 35px;
+    }
+
+    .cardActions {
+        width: 100%;
+
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .cardActions button {
+        width: 100%;
+    }
+
+    .infoSection {
+        padding-bottom: 90px;
+    }
+
+    .infoGrid {
+        margin-top: 35px;
+    }
+
+    .infoBlock {
+        padding: 25px;
+    }
+
+    .blockLabel {
+        margin-bottom: 28px;
+    }
+
+    .aboutText {
+        font-size: 12px;
+    }
+
+    .bottom {
+        min-height: 130px;
+
+        flex-direction: column;
+
+        gap: 25px;
+    }
+
+    .bottom button {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .errorScreen {
+        padding: 70px 0;
+    }
+
+    .errorScreen h1 {
+        font-size: 58px;
+    }
+}
+
+/* =========================================================
+   VERY SMALL MOBILE
+========================================================= */
+
+@media (max-width: 420px) {
+    .profile {
+        padding: 0 14px;
+    }
+
+    .backButton {
+        font-size: 7px;
+    }
+
+    .logo {
+        gap: 7px;
+        font-size: 7px;
+    }
+
+    .navMeta {
+        font-size: 6px;
+    }
+
+    .hero {
+        padding-top: 50px;
+    }
+
+    .identityContent h1 {
+        font-size: 52px;
+    }
+
+    .identityLine p {
+        font-size: 10px;
+    }
+
+    .infoBlock {
+        padding: 20px;
+    }
+}
+
+/* =========================================================
+   REDUCED MOTION
+========================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+    .ringOne,
+    .ringTwo,
+    .orb,
+    .loadingMark,
+    .loadingText span {
+        animation: none;
+    }
+
+    .backButton,
+    .backButton span,
+    .cardActions button,
+    .cardActions button span,
+    .socialLinks a,
+    .bottom button,
+    .bottom button span {
+        transition: none;
+    }
+}

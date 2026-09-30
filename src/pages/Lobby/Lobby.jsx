@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import styles from "./Lobby.module.css";
@@ -6,6 +6,8 @@ import InstaCard from "../../components/card/InstaCard";
 
 const Lobby = () => {
     const navigate = useNavigate();
+
+    const [showLogoutModal, setShowLogoutModal] = useState(false);
 
     const [myCard, setMyCard] = useState(null);
     const [cards, setCards] = useState([]);
@@ -26,86 +28,105 @@ const Lobby = () => {
        LOAD LOBBY DATA
     ========================================================= */
 
-    useEffect(() => {
-        const fetchLobbyData = async () => {
-            const token = localStorage.getItem("token");
+    const fetchLobbyData = useCallback(async () => {
+        const token = localStorage.getItem("token");
 
-            if (!token) {
+        if (!token) {
+            navigate("/login");
+            return;
+        }
+
+        setLoading(true);
+        setError("");
+
+        try {
+            const headers = {
+                Authorization: `Bearer ${token}`,
+            };
+
+            const [myCardResponse, cardsResponse] =
+                await Promise.all([
+                    fetch(
+                        "http://localhost:5000/api/cards/me",
+                        {
+                            headers,
+                        }
+                    ),
+                    fetch(
+                        "http://localhost:5000/api/cards",
+                        {
+                            headers,
+                        }
+                    ),
+                ]);
+
+            const myCardData =
+                await myCardResponse.json();
+
+            const cardsData =
+                await cardsResponse.json();
+
+            /* -------------------------------------------------
+               CURRENT USER CARD
+            ------------------------------------------------- */
+
+            if (myCardResponse.ok) {
+                setMyCard(myCardData.card);
+            } else if (
+                myCardResponse.status === 401
+            ) {
+                localStorage.removeItem("token");
+                localStorage.removeItem("user");
+
                 navigate("/login");
                 return;
+            } else if (
+                myCardResponse.status === 404
+            ) {
+                /*
+                    A 404 simply means the user has not
+                    created an InstaCard yet.
+                */
+                setMyCard(null);
             }
 
-            try {
-                const headers = {
-                    Authorization: `Bearer ${token}`,
-                };
+            /* -------------------------------------------------
+               NETWORK CARDS
+            ------------------------------------------------- */
 
-                const [myCardResponse, cardsResponse] =
-                    await Promise.all([
-                        fetch(
-                            "http://localhost:5000/api/cards/me",
-                            {
-                                headers,
-                            }
-                        ),
-                        fetch(
-                            "http://localhost:5000/api/cards",
-                            {
-                                headers,
-                            }
-                        ),
-                    ]);
+            if (cardsResponse.ok) {
+                setCards(cardsData.cards || []);
+            } else if (
+                cardsResponse.status === 401
+            ) {
+                localStorage.removeItem("token");
+                localStorage.removeItem("user");
 
-                const myCardData =
-                    await myCardResponse.json();
-
-                const cardsData =
-                    await cardsResponse.json();
-
-                if (myCardResponse.ok) {
-                    setMyCard(myCardData.card);
-                } else if (
-                    myCardResponse.status === 401
-                ) {
-                    localStorage.removeItem("token");
-                    localStorage.removeItem("user");
-
-                    navigate("/login");
-                    return;
-                }
-
-                if (cardsResponse.ok) {
-                    setCards(cardsData.cards || []);
-                } else if (
-                    cardsResponse.status === 401
-                ) {
-                    localStorage.removeItem("token");
-                    localStorage.removeItem("user");
-
-                    navigate("/login");
-                    return;
-                } else {
-                    setError(
-                        cardsData.message ||
-                            "Unable to load the network."
-                    );
-                }
-            } catch (error) {
-                console.error(
-                    "Lobby loading error:",
-                    error
-                );
-
+                navigate("/login");
+                return;
+            } else {
                 setError(
-                    "Unable to connect to the InstaCard network."
+                    cardsData.message ||
+                    "Unable to load the network."
                 );
-            } finally {
-                setLoading(false);
             }
-        };
+        } catch (error) {
+            console.error(
+                "Lobby loading error:",
+                error
+            );
 
-        fetchLobbyData();
+            setError(
+                "Unable to connect to the InstaCard network."
+            );
+        } finally {
+            setLoading(false);
+        }
     }, [navigate]);
+
+    useEffect(() => {
+        fetchLobbyData();
+    }, [fetchLobbyData]);
 
     /* =========================================================
        MOUSE
@@ -121,6 +142,17 @@ const Lobby = () => {
     /* =========================================================
        HELPERS
     ========================================================= */
+
+    const normalizeText = (value) => {
+        if (typeof value !== "string") {
+            return "";
+        }
+
+        return value
+            .trim()
+            .replace(/\s+/g, " ")
+            .toLowerCase();
+    };
 
     const getInitial = (name) =>
         name?.charAt(0)?.toUpperCase() || "?";
@@ -146,7 +178,8 @@ const Lobby = () => {
         return cards.filter(
             (card) =>
                 !myCard ||
-                card._id !== myCard._id
+                String(card._id) !==
+                    String(myCard._id)
         );
     }, [cards, myCard]);
 
@@ -171,7 +204,9 @@ const Lobby = () => {
                 }
 
                 const normalized =
-                    skill.trim();
+                    skill
+                        .trim()
+                        .replace(/\s+/g, " ");
 
                 const key =
                     normalized.toLowerCase();
@@ -200,44 +235,46 @@ const Lobby = () => {
 
     const filteredCards = useMemo(() => {
         const query =
-            search.trim().toLowerCase();
+            normalizeText(search);
+
+        const selectedSkill =
+            normalizeText(activeSkill);
 
         return otherCards.filter((card) => {
             const name =
-                card.name?.toLowerCase() || "";
+                normalizeText(card.name);
 
             const role =
-                card.role?.toLowerCase() || "";
+                normalizeText(card.role);
 
             const skills = Array.isArray(
                 card.skills
             )
                 ? card.skills
-                      .map((skill) =>
-                          skill
-                              .toLowerCase()
-                              .trim()
-                      )
-                      .join(" ")
-                : "";
+                    .filter(
+                        (skill) =>
+                            typeof skill ===
+                            "string"
+                    )
+                    .map((skill) =>
+                        normalizeText(skill)
+                    )
+                : [];
 
             const matchesSearch =
                 !query ||
                 name.includes(query) ||
                 role.includes(query) ||
-                skills.includes(query);
+                skills.some((skill) =>
+                    skill.includes(query)
+                );
 
             const matchesSkill =
                 activeSkill === "ALL" ||
-                (Array.isArray(card.skills) &&
-                    card.skills.some(
-                        (skill) =>
-                            skill
-                                .toLowerCase()
-                                .trim() ===
-                            activeSkill.toLowerCase()
-                        )
-                    );
+                skills.some(
+                    (skill) =>
+                        skill === selectedSkill
+                );
 
             return (
                 matchesSearch &&
@@ -318,7 +355,9 @@ const Lobby = () => {
                         type="button"
                         onClick={() =>
                             navigate(
-                                "/builder"
+                                myCard
+                                    ? "/builder?edit=true"
+                                    : "/builder"
                             )
                         }
                     >
@@ -327,6 +366,17 @@ const Lobby = () => {
                             : "BUILD CARD"}
 
                         <span>↗</span>
+                    </button>
+
+                    <button
+                        type="button"
+                        onClick={() =>
+                            setShowLogoutModal(
+                                true
+                            )
+                        }
+                    >
+                        LOGOUT
                     </button>
                 </div>
             </nav>
@@ -418,7 +468,9 @@ const Lobby = () => {
                     </span>
 
                     <strong>
-                        {myCard ? "ACTIVE" : "NEW"}
+                        {myCard
+                            ? "ACTIVE"
+                            : "NEW"}
                     </strong>
                 </div>
 
@@ -491,7 +543,7 @@ const Lobby = () => {
                                     type="button"
                                     onClick={() =>
                                         navigate(
-                                            "/builder"
+                                            "/builder?edit=true"
                                         )
                                     }
                                 >
@@ -703,11 +755,11 @@ const Lobby = () => {
                                     1
                                         ? "01 PERSON FOUND"
                                         : `${String(
-                                              filteredCards.length
-                                          ).padStart(
-                                              2,
-                                              "0"
-                                          )} PEOPLE FOUND`}
+                                            filteredCards.length
+                                        ).padStart(
+                                            2,
+                                            "0"
+                                        )} PEOPLE FOUND`}
                                 </span>
 
                                 <span>
@@ -715,8 +767,8 @@ const Lobby = () => {
                                     "ALL"
                                         ? `SKILL / ${activeSkill.toUpperCase()}`
                                         : search
-                                        ? `SEARCH / ${search.toUpperCase()}`
-                                        : "FILTER / ALL"}
+                                            ? `SEARCH / ${search.toUpperCase()}`
+                                            : "FILTER / ALL"}
                                 </span>
 
                                 {(search ||
@@ -762,7 +814,9 @@ const Lobby = () => {
                             styles.empty
                         }
                     >
-                        <span>ERROR / 500</span>
+                        <span>
+                            ERROR / NETWORK
+                        </span>
 
                         <h3>
                             NETWORK
@@ -770,7 +824,22 @@ const Lobby = () => {
                             UNAVAILABLE.
                         </h3>
 
-                        <p>{error}</p>
+                        <p>
+                            {error}
+                        </p>
+
+                        <button
+                            type="button"
+                            className={
+                                styles.emptyButton
+                            }
+                            onClick={
+                                fetchLobbyData
+                            }
+                        >
+                            TRY AGAIN
+                            <span>↻</span>
+                        </button>
                     </div>
                 ) : otherCards.length === 0 ? (
                     <div
@@ -778,7 +847,9 @@ const Lobby = () => {
                             styles.empty
                         }
                     >
-                        <span>00</span>
+                        <span>
+                            00 / NETWORK
+                        </span>
 
                         <h3>
                             YOU ARE EARLY.
@@ -791,6 +862,23 @@ const Lobby = () => {
                             become the first
                             connection.
                         </p>
+
+                        {!myCard && (
+                            <button
+                                type="button"
+                                className={
+                                    styles.emptyButton
+                                }
+                                onClick={() =>
+                                    navigate(
+                                        "/builder"
+                                    )
+                                }
+                            >
+                                CREATE INSTACARD
+                                <span>↗</span>
+                            </button>
+                        )}
                     </div>
                 ) : filteredCards.length ===
                   0 ? (
@@ -799,7 +887,9 @@ const Lobby = () => {
                             styles.empty
                         }
                     >
-                        <span>00 / NO MATCH</span>
+                        <span>
+                            00 / NO MATCH
+                        </span>
 
                         <h3>
                             NOTHING
@@ -1074,6 +1164,115 @@ const Lobby = () => {
                         : "CREATE YOUR IDENTITY"}
                 </span>
             </footer>
+
+            {/* =====================================================
+                LOGOUT MODAL
+            ===================================================== */}
+
+            {showLogoutModal && (
+                <div
+                    className={
+                        styles.logoutOverlay
+                    }
+                    onClick={() =>
+                        setShowLogoutModal(
+                            false
+                        )
+                    }
+                >
+                    <div
+                        className={
+                            styles.logoutModal
+                        }
+                        onClick={(event) =>
+                            event.stopPropagation()
+                        }
+                    >
+                        <div
+                            className={
+                                styles.logoutModalTop
+                            }
+                        >
+                            <span>
+                                ACCOUNT
+                            </span>
+
+                            <button
+                                type="button"
+                                onClick={() =>
+                                    setShowLogoutModal(
+                                        false
+                                    )
+                                }
+                                aria-label="Close logout dialog"
+                            >
+                                ×
+                            </button>
+                        </div>
+
+                        <div
+                            className={
+                                styles.logoutModalContent
+                            }
+                        >
+                            <span
+                                className={
+                                    styles.logoutModalNumber
+                                }
+                            >
+                                07
+                            </span>
+
+                            <h2>
+                                LOGOUT
+                            </h2>
+
+                            <p>
+                                Are you sure you want to
+                                logout?
+                            </p>
+                        </div>
+
+                        <div
+                            className={
+                                styles.logoutModalActions
+                            }
+                        >
+                            <button
+                                type="button"
+                                className={
+                                    styles.cancelButton
+                                }
+                                onClick={() =>
+                                    setShowLogoutModal(
+                                        false
+                                    )
+                                }
+                            >
+                                CANCEL
+                            </button>
+
+                            <button
+                                type="button"
+                                className={
+                                    styles.confirmLogoutButton
+                                }
+                                onClick={() => {
+                                    localStorage.removeItem(
+                                        "token"
+                                    );
+                                    localStorage.removeItem(
+                                        "user"
+                                    );
+                                    navigate("/login");
+                                }}
+                            >
+                                LOGOUT
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </main>
     );
 };

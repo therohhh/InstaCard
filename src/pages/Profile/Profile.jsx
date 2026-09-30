@@ -66,7 +66,7 @@ const Profile = () => {
                 if (!profileResponse.ok) {
                     setError(
                         profileData.message ||
-                            "Card not found."
+                        "Card not found."
                     );
                     return;
                 }
@@ -94,20 +94,31 @@ const Profile = () => {
     }, [id, navigate]);
 
     const isOwner = useMemo(() => {
-        if (!card || !currentUser) {
-            return false;
-        }
+    if (!card || !currentUser) {
+        return false;
+    }
 
-        const cardUserId =
-            typeof card.user === "object"
-                ? card.user?._id
-                : card.user;
+    const cardUserId =
+        typeof card.user === "object"
+            ? card.user?._id || card.user?.id
+            : card.user;
 
-        return (
+    const currentUserId =
+        currentUser._id || currentUser.id;
+
+    console.log("OWNER CHECK:", {
+        cardUserId,
+        currentUserId,
+        isOwner:
             String(cardUserId) ===
-            String(currentUser._id)
-        );
-    }, [card, currentUser]);
+            String(currentUserId),
+    });
+
+    return (
+        String(cardUserId) ===
+        String(currentUserId)
+    );
+}, [card, currentUser]);
 
     const profileUrl = window.location.href;
 
@@ -150,13 +161,12 @@ const Profile = () => {
             const link =
                 document.createElement("a");
 
-            link.download = `${
-                card.name
+            link.download = `${card.name
                     ?.toLowerCase()
                     .replace(/[^a-z0-9]+/g, "-")
                     .replace(/^-|-$/g, "") ||
                 "instacard"
-            }-instacard.png`;
+                }-instacard.png`;
 
             link.href =
                 canvas.toDataURL("image/png");
@@ -398,9 +408,10 @@ const Profile = () => {
                     {isOwner && (
                         <button
                             type="button"
-                            onClick={() =>
-                                navigate("/builder")
-                            }
+                            onClick={() => {
+                                console.log("EDIT CARD CLICKED");
+                                navigate("/builder?edit=true")
+                            }}
                             className={
                                 styles.editAction
                             }
@@ -477,7 +488,7 @@ const Profile = () => {
                             }
                         >
                             {card.skills?.length >
-                            0 ? (
+                                0 ? (
                                 card.skills.map(
                                     (skill) => (
                                         <span

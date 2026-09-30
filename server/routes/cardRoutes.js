@@ -1,26 +1,65 @@
 import express from "express";
 
 import {
-  saveCard,
-  getPublishedCards,
-  getCardById,
-  getMyCard,
+    saveCard,
+    updateMyCard,
+    getPublishedCards,
+    getCardById,
+    getMyCard,
 } from "../controllers/cardController.js";
 
 import authMiddleware from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
-// Create or update the logged-in user's card
-router.post("/", authMiddleware, saveCard);
+/* =========================================================
+   CREATE CARD
+========================================================= */
 
-// Get all published cards
-router.get("/", authMiddleware, getPublishedCards);
+router.post(
+    "/",
+    authMiddleware,
+    saveCard
+);
 
-// Get the logged-in user's own card
-router.get("/me", authMiddleware, getMyCard);
+/* =========================================================
+   GET ALL PUBLISHED CARDS
+========================================================= */
 
-// Get a specific published card
-router.get("/:id", authMiddleware, getCardById);
+router.get(
+    "/",
+    authMiddleware,
+    getPublishedCards
+);
+
+/* =========================================================
+   GET CURRENT USER'S CARD
+========================================================= */
+
+router.get(
+    "/me",
+    authMiddleware,
+    getMyCard
+);
+
+/* =========================================================
+   UPDATE CURRENT USER'S CARD
+========================================================= */
+
+router.put(
+    "/me",
+    authMiddleware,
+    updateMyCard
+);
+
+/* =========================================================
+   GET SPECIFIC PUBLISHED CARD
+========================================================= */
+
+router.get(
+    "/:id",
+    authMiddleware,
+    getCardById
+);
 
 export default router;

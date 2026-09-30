@@ -1,5 +1,8 @@
-import { useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
+import {
+    useNavigate,
+    useSearchParams,
+} from "react-router-dom";
 import html2canvas from "html2canvas";
 import styles from "./Builder.module.css";
 
@@ -9,6 +12,10 @@ const fallbackAvatar = {
 
 const Builder = () => {
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
+
+    const isEditMode =
+        searchParams.get("edit") === "true";
 
     const backgroundInputRef = useRef(null);
     const avatarInputRef = useRef(null);
@@ -25,11 +32,18 @@ const Builder = () => {
     });
 
     const [skillInput, setSkillInput] = useState("");
+
     const [avatarImage, setAvatarImage] = useState(null);
     const [backgroundImage, setBackgroundImage] = useState(null);
 
+    const [uploadingAvatar, setUploadingAvatar] = useState(false);
+    const [uploadingBackground, setUploadingBackground] =
+        useState(false);
+
     const [error, setError] = useState("");
     const [saving, setSaving] = useState(false);
+    const [loadingCard, setLoadingCard] =
+        useState(isEditMode);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -53,7 +67,8 @@ const Builder = () => {
         }
 
         const alreadyExists = card.skills.some(
-            (item) => item.toLowerCase() === skill.toLowerCase()
+            (item) =>
+                item.toLowerCase() === skill.toLowerCase()
         );
 
         if (alreadyExists) {
@@ -79,57 +94,324 @@ const Builder = () => {
         }));
     };
 
-    const handleImageUpload = (file, setter) => {
-        if (!file) return;
+    /* =========================================================
+       LOAD EXISTING CARD FOR EDIT MODE
+    ========================================================= */
 
-        if (!file.type.startsWith("image/")) {
-            setError("Please select a valid image file.");
-            return;
+    useEffect(() => {
+        if (!isEditMode) return;
+
+        const loadMyCard = async () => {
+            const token = localStorage.getItem("token");
+
+            if (!token) {
+                navigate("/login");
+                return;
+            }
+
+            try {
+                setLoadingCard(true);
+                setError("");
+
+                const response = await fetch(
+                    "http://localhost:5000/api/cards/me",
+                    {
+                        headers: {
+                            Authorization: `Bearer ${token}`,
+                        },
+                    }
+                );
+
+                const data = await response.json();
+
+                if (response.status === 401) {
+                    localStorage.removeItem("token");
+                    localStorage.removeItem("user");
+                    navigate("/login");
+                    return;
+                }
+
+                if (!response.ok) {
+                    throw new Error(
+                        data.message ||
+                            "Unable to load your card."
+                    );
+                }
+
+                const existingCard = data.card;
+
+                if (!existingCard) {
+                    throw new Error(
+                        "No card was found to edit."
+                    );
+                }
+
+                setCard({
+                    name: existingCard.name || "",
+                    role: existingCard.role || "",
+                    bio: existingCard.bio || "",
+                    skills: Array.isArray(
+                        existingCard.skills
+                    )
+                        ? existingCard.skills
+                        : [],
+                    github: existingCard.github || "",
+                    linkedin:
+                        existingCard.linkedin || "",
+                    portfolio:
+                        existingCard.portfolio || "",
+                });
+
+                if (
+                    existingCard.avatar?.type ===
+                        "image" &&
+                    existingCard.avatar?.url
+                ) {
+                    setAvatarImage(
+                        existingCard.avatar.url
+                    );
+                } else {
+                    setAvatarImage(null);
+                }
+
+                setBackgroundImage(
+                    existingCard.backgroundImage ||
+                        null
+                );
+            } catch (loadError) {
+                console.error(
+                    "Load card error:",
+                    loadError
+                );
+
+                setError(
+                    loadError.message ||
+                        "Unable to load your card."
+                );
+            } finally {
+                setLoadingCard(false);
+            }
+        };
+
+        loadMyCard();
+    }, [isEditMode, navigate]);
+
+    /* =========================================================
+       CLOUDINARY IMAGE UPLOAD
+    ========================================================= */
+
+
+    const uploadImageToCloudinary = async (file) => {
+        const token = localStorage.getItem("token");
+
+        if (!token) {
+            navigate("/login");
+            throw new Error(
+                "Your session has expired. Please login again."
+            );
         }
 
         const reader = new FileReader();
 
-        reader.onload = () => {
-            setter(reader.result);
+        const base64Image = await new Promise(
+            (resolve, reject) => {
+                reader.onload = () =>
+                    resolve(reader.result);
+
+                reader.onerror = () =>
+                    reject(
+                        new Error(
+                            "Unable to read the selected image."
+                        )
+                    );
+
+                reader.readAsDataURL(file);
+            }
+        );
+
+        const response = await fetch(
+            "http://localhost:5000/api/upload",
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify({
+                    image: base64Image,
+                }),
+            }
+        );
+
+        const data = await response.json();
+
+        if (response.status === 401) {
+            localStorage.removeItem("token");
+            localStorage.removeItem("user");
+
+            navigate("/login");
+            throw new Error(
+                "Your session has expired. Please login again."
+            );
+        }
+
+        if (!response.ok) {
+            throw new Error(
+                data.message ||
+                    "Image upload failed."
+            );
+        }
+
+        if (!data.url) {
+            throw new Error(
+                "Cloudinary did not return an image URL."
+            );
+        }
+
+        return {
+            url: data.url,
+            publicId: data.publicId || null,
+        };
+    };
+
+    const handleImageUpload = async (
+        file,
+        setter,
+        setUploading
+    ) => {
+        if (!file) return;
+
+        if (!file.type.startsWith("image/")) {
+            setError(
+                "Please select a valid image file."
+            );
+            return;
+        }
+
+        /*
+         * Keep the current image size reasonable.
+         * Cloudinary can handle the actual storage.
+         */
+        const maxSize = 10 * 1024 * 1024;
+
+        if (file.size > maxSize) {
+            setError(
+                "Image must be smaller than 10 MB."
+            );
+            return;
+        }
+
+        try {
             setError("");
-        };
+            setUploading(true);
 
-        reader.onerror = () => {
-            setError("Unable to read the selected image.");
-        };
+            /*
+             * Upload the image to Cloudinary.
+             * We temporarily use the local Base64 version
+             * only for the preview.
+             */
+            const reader = new FileReader();
 
-        reader.readAsDataURL(file);
+            const preview = await new Promise(
+                (resolve, reject) => {
+                    reader.onload = () =>
+                        resolve(reader.result);
+
+                    reader.onerror = () =>
+                        reject(
+                            new Error(
+                                "Unable to create image preview."
+                            )
+                        );
+
+                    reader.readAsDataURL(file);
+                }
+            );
+
+            /*
+             * Show preview immediately.
+             */
+            setter(preview);
+
+            /*
+             * Upload to backend -> Cloudinary.
+             */
+            const uploaded =
+                await uploadImageToCloudinary(file);
+
+            /*
+             * Replace the temporary Base64 preview
+             * with the permanent Cloudinary URL.
+             */
+            setter(uploaded.url);
+        } catch (uploadError) {
+            console.error(
+                "Image upload error:",
+                uploadError
+            );
+
+            setError(
+                uploadError.message ||
+                    "Image upload failed. Please try again."
+            );
+
+            /*
+             * Remove the image if upload failed.
+             */
+            setter(null);
+        } finally {
+            setUploading(false);
+        }
     };
 
-    const handleAvatarUpload = (e) => {
+    const handleAvatarUpload = async (e) => {
         const file = e.target.files?.[0];
 
-        handleImageUpload(file, setAvatarImage);
+        await handleImageUpload(
+            file,
+            setAvatarImage,
+            setUploadingAvatar
+        );
 
         e.target.value = "";
     };
 
-    const handleBackgroundUpload = (e) => {
+    const handleBackgroundUpload = async (e) => {
         const file = e.target.files?.[0];
 
-        handleImageUpload(file, setBackgroundImage);
+        await handleImageUpload(
+            file,
+            setBackgroundImage,
+            setUploadingBackground
+        );
 
         e.target.value = "";
     };
+
+    /* =========================================================
+       DOWNLOAD CARD
+    ========================================================= */
 
     const downloadCard = async () => {
         if (!cardRef.current) return;
 
         try {
-            const canvas = await html2canvas(cardRef.current, {
-                useCORS: true,
-                scale: 2,
-                backgroundColor: null,
-            });
+            const canvas = await html2canvas(
+                cardRef.current,
+                {
+                    useCORS: true,
+                    scale: 2,
+                    backgroundColor: null,
+                }
+            );
 
-            const image = canvas.toDataURL("image/jpeg", 0.95);
+            const image = canvas.toDataURL(
+                "image/jpeg",
+                0.95
+            );
 
-            const link = document.createElement("a");
+            const link =
+                document.createElement("a");
 
             link.href = image;
             link.download = "instacard.jpg";
@@ -149,8 +431,13 @@ const Builder = () => {
         }
     };
 
+    /* =========================================================
+       PUBLISH CARD
+    ========================================================= */
+
     const saveAndPushToLobby = async () => {
-        const token = localStorage.getItem("token");
+        const token =
+            localStorage.getItem("token");
 
         if (!token) {
             setError(
@@ -163,6 +450,20 @@ const Builder = () => {
 
         if (!card.name.trim()) {
             setError("Please enter your name.");
+            return;
+        }
+
+        /*
+         * Prevent publishing while either image
+         * is still being uploaded.
+         */
+        if (
+            uploadingAvatar ||
+            uploadingBackground
+        ) {
+            setError(
+                "Please wait for the image upload to finish."
+            );
             return;
         }
 
@@ -179,6 +480,13 @@ const Builder = () => {
                 linkedin: card.linkedin.trim(),
                 portfolio: card.portfolio.trim(),
 
+                /*
+                 * avatarImage is now either:
+                 * - Cloudinary URL
+                 * - null
+                 *
+                 * No Base64 is sent to MongoDB.
+                 */
                 avatar: avatarImage
                     ? {
                           type: "image",
@@ -192,6 +500,10 @@ const Builder = () => {
                           color: fallbackAvatar.color,
                       },
 
+                /*
+                 * backgroundImage is now the
+                 * Cloudinary URL.
+                 */
                 backgroundImage:
                     backgroundImage || null,
 
@@ -199,12 +511,17 @@ const Builder = () => {
             };
 
             const response = await fetch(
-                "http://localhost:5000/api/cards",
+                isEditMode
+                    ? "http://localhost:5000/api/cards/me"
+                    : "http://localhost:5000/api/cards",
                 {
-                    method: "POST",
+                    method: isEditMode
+                        ? "PUT"
+                        : "POST",
 
                     headers: {
-                        "Content-Type": "application/json",
+                        "Content-Type":
+                            "application/json",
                         Authorization: `Bearer ${token}`,
                     },
 
@@ -212,9 +529,26 @@ const Builder = () => {
                 }
             );
 
-            const data = await response.json();
+            const data =
+                await response.json();
 
-            console.log("Publish response:", data);
+            console.log(
+                "Publish response:",
+                data
+            );
+
+            if (response.status === 401) {
+                localStorage.removeItem(
+                    "token"
+                );
+
+                localStorage.removeItem(
+                    "user"
+                );
+
+                navigate("/login");
+                return;
+            }
 
             if (!response.ok) {
                 setError(
@@ -238,9 +572,7 @@ const Builder = () => {
                 JSON.stringify(data.card)
             );
 
-            navigate("/lobby", {
-                replace: true,
-            });
+            window.location.replace("/lobby");
         } catch (publishError) {
             console.error(
                 "Publish card error:",
@@ -279,7 +611,9 @@ const Builder = () => {
                     <button
                         type="button"
                         className={styles.backButton}
-                        onClick={() => navigate("/lobby")}
+                        onClick={() =>
+                            navigate("/lobby")
+                        }
                     >
                         ← Lobby
                     </button>
@@ -291,8 +625,14 @@ const Builder = () => {
                 </div>
 
                 <div className={styles.headerStatus}>
-                    <span className={styles.statusDot} />
-                    LIVE BUILDER
+                    <span
+                        className={
+                            styles.statusDot
+                        }
+                    />
+                    {isEditMode
+                        ? "EDIT MODE"
+                        : "LIVE BUILDER"}
                 </div>
             </header>
 
@@ -303,18 +643,22 @@ const Builder = () => {
             <section className={styles.intro}>
                 <div className={styles.introMeta}>
                     <span>01</span>
-                    <span>CREATE / DEFINE / SHARE</span>
+                    <span>
+                        CREATE / DEFINE / SHARE
+                    </span>
                 </div>
 
                 <h1>
-                    Build your
+                    {isEditMode
+                        ? "Refine your"
+                        : "Build your"}
                     <span> identity.</span>
                 </h1>
 
                 <p>
-                    Create a professional identity card
-                    that makes your work instantly
-                    recognizable.
+                    {isEditMode
+                        ? "Update your professional identity and keep your profile current."
+                        : "Create a professional identity card that makes your work instantly recognizable."}
                 </p>
             </section>
 
@@ -322,22 +666,38 @@ const Builder = () => {
                 BUILDER
             ===================================================== */}
 
-            <main className={styles.builderContainer}>
+            <main
+                className={styles.builderContainer}
+            >
                 {/* =================================================
                     LEFT — EDITOR
                 ================================================= */}
 
-                <section className={styles.formSection}>
-                    <div className={styles.sectionHeader}>
+                <section
+                    className={styles.formSection}
+                >
+                    <div
+                        className={
+                            styles.sectionHeader
+                        }
+                    >
                         <div>
-                            <span className={styles.sectionNumber}>
+                            <span
+                                className={
+                                    styles.sectionNumber
+                                }
+                            >
                                 01
                             </span>
 
                             <h2>Card Details</h2>
                         </div>
 
-                        <span className={styles.liveLabel}>
+                        <span
+                            className={
+                                styles.liveLabel
+                            }
+                        >
                             ● LIVE
                         </span>
                     </div>
@@ -347,10 +707,22 @@ const Builder = () => {
                             PROFILE MEDIA
                         ================================================= */}
 
-                        <div className={styles.controlSection}>
-                            <div className={styles.controlHeading}>
+                        <div
+                            className={
+                                styles.controlSection
+                            }
+                        >
+                            <div
+                                className={
+                                    styles.controlHeading
+                                }
+                            >
                                 <div>
-                                    <span className={styles.controlIndex}>
+                                    <span
+                                        className={
+                                            styles.controlIndex
+                                        }
+                                    >
                                         01
                                     </span>
 
@@ -359,7 +731,9 @@ const Builder = () => {
                                     </label>
                                 </div>
 
-                                <span>OPTIONAL</span>
+                                <span>
+                                    OPTIONAL
+                                </span>
                             </div>
 
                             <input
@@ -369,7 +743,9 @@ const Builder = () => {
                                 onChange={
                                     handleAvatarUpload
                                 }
-                                className={styles.fileInput}
+                                className={
+                                    styles.fileInput
+                                }
                             />
 
                             <div
@@ -384,11 +760,15 @@ const Builder = () => {
                                 >
                                     {avatarImage ? (
                                         <img
-                                            src={avatarImage}
+                                            src={
+                                                avatarImage
+                                            }
                                             alt="Profile preview"
                                         />
                                     ) : (
-                                        <span>+</span>
+                                        <span>
+                                            +
+                                        </span>
                                     )}
                                 </div>
 
@@ -398,14 +778,17 @@ const Builder = () => {
                                     }
                                 >
                                     <strong>
-                                        {avatarImage
-                                            ? "Profile picture added"
-                                            : "Add profile picture"}
+                                        {uploadingAvatar
+                                            ? "Uploading..."
+                                            : avatarImage
+                                              ? "Profile picture added"
+                                              : "Add profile picture"}
                                     </strong>
 
                                     <span>
-                                        Use a clear,
-                                        professional image.
+                                        {uploadingAvatar
+                                            ? "Uploading to Cloudinary."
+                                            : "Use a clear, professional image."}
                                     </span>
                                 </div>
                             </div>
@@ -418,36 +801,57 @@ const Builder = () => {
                                 onClick={() =>
                                     avatarInputRef.current?.click()
                                 }
+                                disabled={
+                                    uploadingAvatar
+                                }
                             >
                                 ↑{" "}
-                                {avatarImage
-                                    ? "Change image"
-                                    : "Upload image"}
+                                {uploadingAvatar
+                                    ? "Uploading..."
+                                    : avatarImage
+                                      ? "Change image"
+                                      : "Upload image"}
                             </button>
 
-                            {avatarImage && (
-                                <button
-                                    type="button"
-                                    className={
-                                        styles.removeButton
-                                    }
-                                    onClick={() =>
-                                        setAvatarImage(null)
-                                    }
-                                >
-                                    Remove profile picture
-                                </button>
-                            )}
+                            {avatarImage &&
+                                !uploadingAvatar && (
+                                    <button
+                                        type="button"
+                                        className={
+                                            styles.removeButton
+                                        }
+                                        onClick={() =>
+                                            setAvatarImage(
+                                                null
+                                            )
+                                        }
+                                    >
+                                        Remove profile
+                                        picture
+                                    </button>
+                                )}
                         </div>
 
                         {/* =================================================
                             BACKGROUND
                         ================================================= */}
 
-                        <div className={styles.controlSection}>
-                            <div className={styles.controlHeading}>
+                        <div
+                            className={
+                                styles.controlSection
+                            }
+                        >
+                            <div
+                                className={
+                                    styles.controlHeading
+                                }
+                            >
                                 <div>
-                                    <span className={styles.controlIndex}>
+                                    <span
+                                        className={
+                                            styles.controlIndex
+                                        }
+                                    >
                                         02
                                     </span>
 
@@ -456,17 +860,23 @@ const Builder = () => {
                                     </label>
                                 </div>
 
-                                <span>OPTIONAL</span>
+                                <span>
+                                    OPTIONAL
+                                </span>
                             </div>
 
                             <input
-                                ref={backgroundInputRef}
+                                ref={
+                                    backgroundInputRef
+                                }
                                 type="file"
                                 accept="image/*"
                                 onChange={
                                     handleBackgroundUpload
                                 }
-                                className={styles.fileInput}
+                                className={
+                                    styles.fileInput
+                                }
                             />
 
                             <button
@@ -477,18 +887,31 @@ const Builder = () => {
                                 onClick={() =>
                                     backgroundInputRef.current?.click()
                                 }
+                                disabled={
+                                    uploadingBackground
+                                }
                             >
-                                <span className={styles.uploadIcon}>
+                                <span
+                                    className={
+                                        styles.uploadIcon
+                                    }
+                                >
                                     +
                                 </span>
 
                                 <span>
-                                    {backgroundImage
-                                        ? "Change background image"
-                                        : "Add a custom background"}
+                                    {uploadingBackground
+                                        ? "Uploading background..."
+                                        : backgroundImage
+                                          ? "Change background image"
+                                          : "Add a custom background"}
                                 </span>
 
-                                <span className={styles.uploadArrow}>
+                                <span
+                                    className={
+                                        styles.uploadArrow
+                                    }
+                                >
                                     ↗
                                 </span>
                             </button>
@@ -500,18 +923,24 @@ const Builder = () => {
                                     }
                                 >
                                     <img
-                                        src={backgroundImage}
+                                        src={
+                                            backgroundImage
+                                        }
                                         alt="Background preview"
                                     />
 
-                                    <button
-                                        type="button"
-                                        onClick={() =>
-                                            setBackgroundImage(null)
-                                        }
-                                    >
-                                        Remove
-                                    </button>
+                                    {!uploadingBackground && (
+                                        <button
+                                            type="button"
+                                            onClick={() =>
+                                                setBackgroundImage(
+                                                    null
+                                                )
+                                            }
+                                        >
+                                            Remove
+                                        </button>
+                                    )}
                                 </div>
                             )}
                         </div>
@@ -520,10 +949,22 @@ const Builder = () => {
                             BASIC INFORMATION
                         ================================================= */}
 
-                        <div className={styles.controlSection}>
-                            <div className={styles.controlHeading}>
+                        <div
+                            className={
+                                styles.controlSection
+                            }
+                        >
+                            <div
+                                className={
+                                    styles.controlHeading
+                                }
+                            >
                                 <div>
-                                    <span className={styles.controlIndex}>
+                                    <span
+                                        className={
+                                            styles.controlIndex
+                                        }
+                                    >
                                         03
                                     </span>
 
@@ -533,7 +974,11 @@ const Builder = () => {
                                 </div>
                             </div>
 
-                            <div className={styles.field}>
+                            <div
+                                className={
+                                    styles.field
+                                }
+                            >
                                 <label htmlFor="name">
                                     NAME
                                 </label>
@@ -543,13 +988,21 @@ const Builder = () => {
                                     name="name"
                                     type="text"
                                     placeholder="Rohith Lenka"
-                                    value={card.name}
-                                    onChange={handleChange}
+                                    value={
+                                        card.name
+                                    }
+                                    onChange={
+                                        handleChange
+                                    }
                                     autoComplete="name"
                                 />
                             </div>
 
-                            <div className={styles.field}>
+                            <div
+                                className={
+                                    styles.field
+                                }
+                            >
                                 <label htmlFor="role">
                                     ROLE
                                 </label>
@@ -559,12 +1012,20 @@ const Builder = () => {
                                     name="role"
                                     type="text"
                                     placeholder="Software Developer"
-                                    value={card.role}
-                                    onChange={handleChange}
+                                    value={
+                                        card.role
+                                    }
+                                    onChange={
+                                        handleChange
+                                    }
                                 />
                             </div>
 
-                            <div className={styles.field}>
+                            <div
+                                className={
+                                    styles.field
+                                }
+                            >
                                 <label htmlFor="bio">
                                     BIO
                                 </label>
@@ -575,8 +1036,12 @@ const Builder = () => {
                                     rows="4"
                                     maxLength="180"
                                     placeholder="Tell people a little about yourself..."
-                                    value={card.bio}
-                                    onChange={handleChange}
+                                    value={
+                                        card.bio
+                                    }
+                                    onChange={
+                                        handleChange
+                                    }
                                 />
 
                                 <span
@@ -584,7 +1049,11 @@ const Builder = () => {
                                         styles.characterCount
                                     }
                                 >
-                                    {card.bio.length}/180
+                                    {
+                                        card.bio
+                                            .length
+                                    }
+                                    /180
                                 </span>
                             </div>
                         </div>
@@ -593,18 +1062,36 @@ const Builder = () => {
                             SKILLS
                         ================================================= */}
 
-                        <div className={styles.controlSection}>
-                            <div className={styles.controlHeading}>
+                        <div
+                            className={
+                                styles.controlSection
+                            }
+                        >
+                            <div
+                                className={
+                                    styles.controlHeading
+                                }
+                            >
                                 <div>
-                                    <span className={styles.controlIndex}>
+                                    <span
+                                        className={
+                                            styles.controlIndex
+                                        }
+                                    >
                                         04
                                     </span>
 
-                                    <label>Skills</label>
+                                    <label>
+                                        Skills
+                                    </label>
                                 </div>
 
                                 <span>
-                                    {card.skills.length}/8
+                                    {
+                                        card.skills
+                                            .length
+                                    }
+                                    /8
                                 </span>
                             </div>
 
@@ -616,7 +1103,9 @@ const Builder = () => {
                                 <input
                                     type="text"
                                     placeholder="Add a skill..."
-                                    value={skillInput}
+                                    value={
+                                        skillInput
+                                    }
                                     maxLength="20"
                                     onChange={(e) =>
                                         setSkillInput(
@@ -636,9 +1125,12 @@ const Builder = () => {
 
                                 <button
                                     type="button"
-                                    onClick={addSkill}
+                                    onClick={
+                                        addSkill
+                                    }
                                     disabled={
-                                        card.skills.length >=
+                                        card.skills
+                                            .length >=
                                         8
                                     }
                                     className={
@@ -649,7 +1141,8 @@ const Builder = () => {
                                 </button>
                             </div>
 
-                            {card.skills.length > 0 && (
+                            {card.skills.length >
+                                0 && (
                                 <div
                                     className={
                                         styles.skillList
@@ -661,10 +1154,14 @@ const Builder = () => {
                                                 className={
                                                     styles.skillTag
                                                 }
-                                                key={skill}
+                                                key={
+                                                    skill
+                                                }
                                             >
                                                 <span>
-                                                    {skill}
+                                                    {
+                                                        skill
+                                                    }
                                                 </span>
 
                                                 <button
@@ -689,10 +1186,22 @@ const Builder = () => {
                             SOCIAL LINKS
                         ================================================= */}
 
-                        <div className={styles.controlSection}>
-                            <div className={styles.controlHeading}>
+                        <div
+                            className={
+                                styles.controlSection
+                            }
+                        >
+                            <div
+                                className={
+                                    styles.controlHeading
+                                }
+                            >
                                 <div>
-                                    <span className={styles.controlIndex}>
+                                    <span
+                                        className={
+                                            styles.controlIndex
+                                        }
+                                    >
                                         05
                                     </span>
 
@@ -701,10 +1210,16 @@ const Builder = () => {
                                     </label>
                                 </div>
 
-                                <span>OPTIONAL</span>
+                                <span>
+                                    OPTIONAL
+                                </span>
                             </div>
 
-                            <div className={styles.field}>
+                            <div
+                                className={
+                                    styles.field
+                                }
+                            >
                                 <label htmlFor="github">
                                     GITHUB
                                 </label>
@@ -714,12 +1229,20 @@ const Builder = () => {
                                     name="github"
                                     type="url"
                                     placeholder="https://github.com/username"
-                                    value={card.github}
-                                    onChange={handleChange}
+                                    value={
+                                        card.github
+                                    }
+                                    onChange={
+                                        handleChange
+                                    }
                                 />
                             </div>
 
-                            <div className={styles.field}>
+                            <div
+                                className={
+                                    styles.field
+                                }
+                            >
                                 <label htmlFor="linkedin">
                                     LINKEDIN
                                 </label>
@@ -729,12 +1252,20 @@ const Builder = () => {
                                     name="linkedin"
                                     type="url"
                                     placeholder="https://linkedin.com/in/username"
-                                    value={card.linkedin}
-                                    onChange={handleChange}
+                                    value={
+                                        card.linkedin
+                                    }
+                                    onChange={
+                                        handleChange
+                                    }
                                 />
                             </div>
 
-                            <div className={styles.field}>
+                            <div
+                                className={
+                                    styles.field
+                                }
+                            >
                                 <label htmlFor="portfolio">
                                     PORTFOLIO
                                 </label>
@@ -744,8 +1275,12 @@ const Builder = () => {
                                     name="portfolio"
                                     type="url"
                                     placeholder="https://yourportfolio.com"
-                                    value={card.portfolio}
-                                    onChange={handleChange}
+                                    value={
+                                        card.portfolio
+                                    }
+                                    onChange={
+                                        handleChange
+                                    }
                                 />
                             </div>
                         </div>
@@ -767,32 +1302,61 @@ const Builder = () => {
                     RIGHT — LIVE PREVIEW
                 ================================================= */}
 
-                <section className={styles.previewSection}>
-                    <div className={styles.previewHeader}>
+                <section
+                    className={
+                        styles.previewSection
+                    }
+                >
+                    <div
+                        className={
+                            styles.previewHeader
+                        }
+                    >
                         <div>
-                            <span className={styles.previewNumber}>
+                            <span
+                                className={
+                                    styles.previewNumber
+                                }
+                            >
                                 02
                             </span>
 
                             <div>
-                                <p>LIVE PREVIEW</p>
+                                <p>
+                                    LIVE PREVIEW
+                                </p>
                                 <span>
-                                    Changes appear instantly
+                                    Changes appear
+                                    instantly
                                 </span>
                             </div>
                         </div>
 
-                        <span className={styles.previewHint}>
+                        <span
+                            className={
+                                styles.previewHint
+                            }
+                        >
                             DRAG / EXPLORE
                         </span>
                     </div>
 
-                    <div className={styles.previewArea}>
-                        <div className={styles.previewGrid} />
+                    <div
+                        className={
+                            styles.previewArea
+                        }
+                    >
+                        <div
+                            className={
+                                styles.previewGrid
+                            }
+                        />
 
                         <div
                             ref={cardRef}
-                            className={styles.profileCard}
+                            className={
+                                styles.profileCard
+                            }
                             style={
                                 backgroundImage
                                     ? {
@@ -825,7 +1389,9 @@ const Builder = () => {
                                 >
                                     {avatarImage ? (
                                         <img
-                                            src={avatarImage}
+                                            src={
+                                                avatarImage
+                                            }
                                             alt={
                                                 card.name ||
                                                 "Profile"
@@ -864,7 +1430,8 @@ const Builder = () => {
                                                 styles.cardEyebrow
                                             }
                                         >
-                                            PROFESSIONAL IDENTITY
+                                            PROFESSIONAL
+                                            IDENTITY
                                         </span>
 
                                         <h2>
@@ -895,9 +1462,13 @@ const Builder = () => {
                                         {displaySkills.map(
                                             (skill) => (
                                                 <span
-                                                    key={skill}
+                                                    key={
+                                                        skill
+                                                    }
                                                 >
-                                                    {skill}
+                                                    {
+                                                        skill
+                                                    }
                                                 </span>
                                             )
                                         )}
@@ -920,7 +1491,9 @@ const Builder = () => {
                                                     }
                                                     target="_blank"
                                                     rel="noreferrer"
-                                                    onClick={(e) =>
+                                                    onClick={(
+                                                        e
+                                                    ) =>
                                                         e.stopPropagation()
                                                     }
                                                 >
@@ -939,7 +1512,9 @@ const Builder = () => {
                                                     }
                                                     target="_blank"
                                                     rel="noreferrer"
-                                                    onClick={(e) =>
+                                                    onClick={(
+                                                        e
+                                                    ) =>
                                                         e.stopPropagation()
                                                     }
                                                 >
@@ -958,7 +1533,9 @@ const Builder = () => {
                                                     }
                                                     target="_blank"
                                                     rel="noreferrer"
-                                                    onClick={(e) =>
+                                                    onClick={(
+                                                        e
+                                                    ) =>
                                                         e.stopPropagation()
                                                     }
                                                 >
@@ -990,12 +1567,15 @@ const Builder = () => {
                             }
                         >
                             <span>
-                                INSTACARD / IDENTITY SYSTEM
+                                INSTACARD / IDENTITY
+                                SYSTEM
                             </span>
 
                             <span>
                                 {card.name
-                                    ? "READY TO PUBLISH"
+                                    ? isEditMode
+                                        ? "READY TO UPDATE"
+                                        : "READY TO PUBLISH"
                                     : "START WITH YOUR NAME"}
                             </span>
                         </div>
@@ -1005,7 +1585,11 @@ const Builder = () => {
                         ACTIONS
                     ================================================= */}
 
-                    <div className={styles.cardActions}>
+                    <div
+                        className={
+                            styles.cardActions
+                        }
+                    >
                         <button
                             type="button"
                             className={
@@ -1025,15 +1609,31 @@ const Builder = () => {
                             onClick={
                                 saveAndPushToLobby
                             }
-                            disabled={saving}
+                            disabled={
+                                saving ||
+                                loadingCard ||
+                                uploadingAvatar ||
+                                uploadingBackground
+                            }
                         >
                             <span>
-                                {saving ? "◌" : "↗"}
+                                {saving ||
+                                uploadingAvatar ||
+                                uploadingBackground
+                                    ? "◌"
+                                    : "↗"}
                             </span>
 
-                            {saving
-                                ? "Publishing..."
-                                : "Publish to Lobby"}
+                            {uploadingAvatar ||
+                            uploadingBackground
+                                ? "Uploading..."
+                                : saving
+                                  ? isEditMode
+                                      ? "Updating..."
+                                      : "Publishing..."
+                                  : isEditMode
+                                    ? "Update Card"
+                                    : "Publish to Lobby"}
                         </button>
                     </div>
                 </section>
@@ -1044,7 +1644,9 @@ const Builder = () => {
             ===================================================== */}
 
             <footer className={styles.footer}>
-                <span>INSTACARD © 2026</span>
+                <span>
+                    INSTACARD © 2026
+                </span>
 
                 <span>
                     BUILD SOMETHING WORTH REMEMBERING.
