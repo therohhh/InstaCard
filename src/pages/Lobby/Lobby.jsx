@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import  { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import styles from "./Lobby.module.css";
@@ -125,8 +125,10 @@ const Lobby = () => {
     }, [navigate]);
 
     useEffect(() => {
-        fetchLobbyData();
-    }, [fetchLobbyData]);
+    // Data fetching on mount is intentional.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchLobbyData();
+}, [fetchLobbyData]);
 
     /* =========================================================
        MOUSE

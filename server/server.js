@@ -7,6 +7,8 @@ import connectDB from "./config/db.js";
 import authRoutes from "./routes/authRoutes.js";
 import cardRoutes from "./routes/cardRoutes.js";
 import uploadRoutes from "./routes/uploadRoutes.js";
+import conversationRoutes from "./routes/conversationRoutes.js";
+import messageRoutes from "./routes/messageRoutes.js";
 
 dotenv.config();
 
@@ -56,6 +58,9 @@ app.use("/api/cards", cardRoutes);
 
 app.use("/api/upload", uploadRoutes);
 
+app.use("/api/conversations", conversationRoutes);
+
+app.use("/api/messages", messageRoutes);
 /* =========================================================
    TEST ROUTE
 ========================================================= */
