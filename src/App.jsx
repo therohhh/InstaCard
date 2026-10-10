@@ -3,11 +3,12 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Welcome from "./components/welcomepage/Welcome";
 import CursorGlow from "./components/cursor/CursorGlow";
 
-import Builder from "./pages/Builder";
+import Builder from "./pages/Builder/Builder";
 import Login from "./pages/Login/Login";
 import Register from "./pages/Register/Register";
 import Profile from "./pages/Profile/Profile";
 import Lobby from "./pages/Lobby/Lobby";
+import Messages from "./pages/Message/Messages";
 
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 
@@ -56,6 +57,15 @@ function App() {
           element={
             <ProtectedRoute>
               <Profile />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/messages"
+          element={
+            <ProtectedRoute>
+              <Messages />
             </ProtectedRoute>
           }
         />

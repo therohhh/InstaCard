@@ -756,3 +756,204 @@
         transition: none;
     }
 }
+
+.conversationItem {
+    position: relative;
+    overflow: hidden;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.conversationItem::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+
+    background: #111;
+
+    transform: scaleY(0);
+    transform-origin: center;
+
+    transition:
+        transform 0.25s ease;
+}
+
+.conversationItem:hover::before,
+.activeConversation::before {
+    transform: scaleY(1);
+}
+
+.activeConversation {
+    transform: translateX(3px);
+}
+
+.conversationItem:focus-visible {
+    outline: 2px solid #111;
+    outline-offset: 3px;
+}
+
+.conversationInfo p {
+    max-width: 100%;
+}
+
+.chatPanel {
+    position: relative;
+}
+
+.chatHeader {
+    position: relative;
+}
+
+.chatHeader h2 {
+    max-width: 70%;
+    overflow: hidden;
+
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.messageComposer {
+    position: relative;
+}
+
+.messageComposer input {
+    padding: 0 14px 0 0;
+}
+
+.messageComposer button {
+    min-width: 92px;
+    justify-content: center;
+}
+
+/* Loading / error state */
+.listEmpty {
+    min-height: 150px;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Better touch targets */
+@media (hover: none) and (pointer: coarse) {
+    .conversationItem {
+        min-height: 72px;
+    }
+
+    .navRight button,
+    .messageComposer button {
+        min-height: 44px;
+    }
+
+    .conversationItem:hover {
+        background: transparent;
+        border-color: transparent;
+        transform: none;
+    }
+
+    .conversationItem:active {
+        background: rgba(255, 255, 255, 0.55);
+        transform: scale(0.99);
+    }
+
+    .conversationItem:hover::before {
+        transform: scaleY(0);
+    }
+
+    .activeConversation::before {
+        transform: scaleY(1);
+    }
+}
+
+/* Prevent narrow-screen overflow */
+@media (max-width: 700px) {
+    .messagesPage {
+        overflow-x: hidden;
+    }
+
+    .conversationList {
+        max-height: 360px;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+    }
+
+    .chatHeader h2 {
+        max-width: 65%;
+    }
+
+    .messageComposer {
+        min-height: 58px;
+    }
+}
+
+@media (max-width: 420px) {
+    .conversationTop {
+        gap: 6px;
+    }
+
+    .conversationTop h2 {
+        max-width: 150px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .messageComposer button {
+        min-width: 72px;
+        padding: 0 10px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .conversationItem::before {
+        transition: none;
+    }
+}
+
+
+.messagesStack {
+    width: 100%;
+
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.myMessage,
+.theirMessage {
+    width: 100%;
+
+    display: flex;
+}
+
+.myMessage {
+    justify-content: flex-end;
+}
+
+.theirMessage {
+    justify-content: flex-start;
+}
+
+.myMessage .messageBubble {
+    background: #111;
+    color: #fff;
+    border-color: #111;
+}
+
+.theirMessage .messageBubble {
+    background: rgba(255, 255, 255, 0.6);
+}
+
+.messageArea {
+    overflow-y: auto;
+    min-height: 0;
+}
+
+@media (max-width: 700px) {
+    .messageBubble {
+        max-width: 82%;
+    }
+}

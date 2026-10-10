@@ -99,3 +99,33 @@ export const findOrCreateConversation = async (req, res) => {
     });
   }
 };
+export const getMyConversations = async (req, res) => {
+  try {
+    const userId = req.userId;
+
+    const conversations = await Conversation.find({
+      participants: userId,
+    })
+      .populate("participants", "name email")
+      .sort({
+        lastMessageAt: -1,
+        updatedAt: -1,
+      });
+
+    return res.status(200).json({
+      success: true,
+      count: conversations.length,
+      conversations,
+    });
+  } catch (error) {
+    console.error(
+      "Get my conversations error:",
+      error
+    );
+
+    return res.status(500).json({
+      success: false,
+      message: "Server error",
+    });
+  }
+};

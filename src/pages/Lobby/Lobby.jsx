@@ -1,4 +1,4 @@
-import  { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import styles from "./Lobby.module.css";
@@ -125,10 +125,10 @@ const Lobby = () => {
     }, [navigate]);
 
     useEffect(() => {
-    // Data fetching on mount is intentional.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    fetchLobbyData();
-}, [fetchLobbyData]);
+        // Data fetching on mount is intentional.
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        fetchLobbyData();
+    }, [fetchLobbyData]);
 
     /* =========================================================
        MOUSE
@@ -181,7 +181,7 @@ const Lobby = () => {
             (card) =>
                 !myCard ||
                 String(card._id) !==
-                    String(myCard._id)
+                String(myCard._id)
         );
     }, [cards, myCard]);
 
@@ -296,6 +296,113 @@ const Lobby = () => {
     const clearFilters = () => {
         setSearch("");
         setActiveSkill("ALL");
+    };
+
+    /* =========================================================
+       MESSAGE
+    ========================================================= */
+
+    const handleMessage = async (card) => {
+        console.log(
+            "MESSAGE CLICKED:",
+            card
+        );
+
+        try {
+            const token =
+                localStorage.getItem("token");
+
+            console.log(
+                "TOKEN EXISTS:",
+                !!token
+            );
+
+            if (!token) {
+                navigate("/login");
+                return;
+            }
+
+            /*
+                IMPORTANT:
+
+                card._id = Card ID
+                card.user  = User ID
+
+                The conversation API expects
+                the USER ID.
+            */
+
+            const targetUserId =
+                typeof card.user === "object"
+                    ? card.user?._id ||
+                      card.user?.id
+                    : card.user;
+
+            console.log(
+                "CARD ID:",
+                card?._id
+            );
+
+            console.log(
+                "TARGET USER ID:",
+                targetUserId
+            );
+
+            if (!targetUserId) {
+                console.error(
+                    "Cannot start conversation: user ID missing.",
+                    card
+                );
+                return;
+            }
+
+            const response = await fetch(
+                `http://localhost:5000/api/conversations/${targetUserId}`,
+                {
+                    method: "POST",
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
+            );
+
+            console.log(
+                "CONVERSATION RESPONSE STATUS:",
+                response.status
+            );
+
+            const data =
+                await response.json();
+
+            console.log(
+                "CONVERSATION RESPONSE:",
+                data
+            );
+
+            if (!response.ok) {
+                throw new Error(
+                    data.message ||
+                    "Unable to start conversation."
+                );
+            }
+
+            console.log(
+                "CONVERSATION CREATED/FOUND:",
+                data.conversation
+            );
+
+            navigate("/messages", {
+                state: {
+                    conversation:
+                        data.conversation,
+                },
+            });
+        } catch (error) {
+            console.error(
+                "Start conversation error:",
+                error
+            );
+        }
     };
 
     /* =========================================================
@@ -757,11 +864,11 @@ const Lobby = () => {
                                     1
                                         ? "01 PERSON FOUND"
                                         : `${String(
-                                            filteredCards.length
-                                        ).padStart(
-                                            2,
-                                            "0"
-                                        )} PEOPLE FOUND`}
+                                              filteredCards.length
+                                          ).padStart(
+                                              2,
+                                              "0"
+                                          )} PEOPLE FOUND`}
                                 </span>
 
                                 <span>
@@ -769,8 +876,8 @@ const Lobby = () => {
                                     "ALL"
                                         ? `SKILL / ${activeSkill.toUpperCase()}`
                                         : search
-                                            ? `SEARCH / ${search.toUpperCase()}`
-                                            : "FILTER / ALL"}
+                                          ? `SEARCH / ${search.toUpperCase()}`
+                                          : "FILTER / ALL"}
                                 </span>
 
                                 {(search ||
@@ -940,11 +1047,22 @@ const Lobby = () => {
                                             null
                                         )
                                     }
-                                    onClick={() =>
+                                    onClick={(event) => {
+                                        if (
+                                            event.target.closest(
+                                                "button"
+                                            ) ||
+                                            event.target.closest(
+                                                "a"
+                                            )
+                                        ) {
+                                            return;
+                                        }
+
                                         navigate(
                                             `/profile/${card._id}`
-                                        )
-                                    }
+                                        );
+                                    }}
                                 >
                                     <div
                                         className={
@@ -973,8 +1091,9 @@ const Lobby = () => {
                                         }
                                     >
                                         <InstaCard
-                                            card={
-                                                card
+                                            card={card}
+                                            onMessage={
+                                                handleMessage
                                             }
                                         />
                                     </div>
@@ -1263,10 +1382,14 @@ const Lobby = () => {
                                     localStorage.removeItem(
                                         "token"
                                     );
+
                                     localStorage.removeItem(
                                         "user"
                                     );
-                                    navigate("/login");
+
+                                    navigate(
+                                        "/login"
+                                    );
                                 }}
                             >
                                 LOGOUT

@@ -4,6 +4,7 @@ const InstaCard = ({
     card = {},
     avatarImage = null,
     backgroundImage = null,
+    onMessage = null,
 }) => {
     const avatar =
         avatarImage ||
@@ -24,14 +25,22 @@ const InstaCard = ({
         card.backgroundImage ||
         null;
 
+    const handleMessageClick = (event) => {
+        event.stopPropagation();
+
+        if (onMessage) {
+            onMessage(card);
+        }
+    };
+
     return (
         <div
             className={styles.profileCard}
             style={
                 cardBackground
                     ? {
-                          backgroundImage: `url(${cardBackground})`,
-                      }
+                        backgroundImage: `url(${cardBackground})`,
+                    }
                     : undefined
             }
         >
@@ -46,9 +55,7 @@ const InstaCard = ({
                             alt={card.name || "Profile"}
                         />
                     ) : (
-                        <span>
-                            {initial}
-                        </span>
+                        <span>{initial}</span>
                     )}
                 </div>
 
@@ -86,6 +93,9 @@ const InstaCard = ({
                                     href={card.github}
                                     target="_blank"
                                     rel="noreferrer"
+                                    onClick={(event) =>
+                                        event.stopPropagation()
+                                    }
                                 >
                                     GitHub
                                 </a>
@@ -98,6 +108,9 @@ const InstaCard = ({
                                     href={card.linkedin}
                                     target="_blank"
                                     rel="noreferrer"
+                                    onClick={(event) =>
+                                        event.stopPropagation()
+                                    }
                                 >
                                     LinkedIn
                                 </a>
@@ -110,6 +123,9 @@ const InstaCard = ({
                                     href={card.portfolio}
                                     target="_blank"
                                     rel="noreferrer"
+                                    onClick={(event) =>
+                                        event.stopPropagation()
+                                    }
                                 >
                                     Portfolio
                                 </a>
@@ -121,6 +137,24 @@ const InstaCard = ({
                         <button
                             type="button"
                             className={styles.messageButton}
+                            onClick={(event) => {
+                                event.preventDefault();
+                                event.stopPropagation();
+
+                                if (onMessage) {
+    console.log(
+        "Calling onMessage for:",
+        card.name,
+        card._id
+    );
+
+    onMessage(card);
+} else {
+    console.error(
+        "onMessage prop is missing!"
+    );
+}
+                            }}
                         >
                             Message
                         </button>
