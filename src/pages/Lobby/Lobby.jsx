@@ -1,164 +1,124 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-
 import styles from "./Lobby.module.css";
 import InstaCard from "../../components/card/InstaCard";
 
 const Lobby = () => {
     const navigate = useNavigate();
-
     const [showLogoutModal, setShowLogoutModal] = useState(false);
-
+    const [unreadCount, setUnreadCount] = useState(0);
     const [myCard, setMyCard] = useState(null);
     const [cards, setCards] = useState([]);
-
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
-
     const [search, setSearch] = useState("");
     const [activeSkill, setActiveSkill] = useState("ALL");
-
     const [hovered, setHovered] = useState(null);
-    const [mouse, setMouse] = useState({
-        x: 0,
-        y: 0,
-    });
+    const [mouse, setMouse] = useState({ x: 0, y: 0 });
 
     /* =========================================================
        LOAD LOBBY DATA
     ========================================================= */
-
     const fetchLobbyData = useCallback(async () => {
         const token = localStorage.getItem("token");
-
         if (!token) {
             navigate("/login");
             return;
         }
-
         setLoading(true);
         setError("");
-
         try {
             const headers = {
                 Authorization: `Bearer ${token}`,
             };
-
-            const [myCardResponse, cardsResponse] =
-                await Promise.all([
-                    fetch(
-                        "http://localhost:5000/api/cards/me",
-                        {
-                            headers,
-                        }
-                    ),
-                    fetch(
-                        "http://localhost:5000/api/cards",
-                        {
-                            headers,
-                        }
-                    ),
-                ]);
-
-            const myCardData =
-                await myCardResponse.json();
-
-            const cardsData =
-                await cardsResponse.json();
-
-            /* -------------------------------------------------
-               CURRENT USER CARD
-            ------------------------------------------------- */
-
+            const [myCardResponse, cardsResponse] = await Promise.all([
+                fetch("http://localhost:5000/api/cards/me", { headers }),
+                fetch("http://localhost:5000/api/cards", { headers }),
+            ]);
+            const myCardData = await myCardResponse.json();
+            const cardsData = await cardsResponse.json();
             if (myCardResponse.ok) {
                 setMyCard(myCardData.card);
-            } else if (
-                myCardResponse.status === 401
-            ) {
+            } else if (myCardResponse.status === 401) {
                 localStorage.removeItem("token");
                 localStorage.removeItem("user");
-
                 navigate("/login");
                 return;
-            } else if (
-                myCardResponse.status === 404
-            ) {
-                /*
-                    A 404 simply means the user has not
-                    created an InstaCard yet.
-                */
+            } else if (myCardResponse.status === 404) {
                 setMyCard(null);
             }
-
-            /* -------------------------------------------------
-               NETWORK CARDS
-            ------------------------------------------------- */
-
             if (cardsResponse.ok) {
                 setCards(cardsData.cards || []);
-            } else if (
-                cardsResponse.status === 401
-            ) {
+            } else if (cardsResponse.status === 401) {
                 localStorage.removeItem("token");
                 localStorage.removeItem("user");
-
                 navigate("/login");
                 return;
             } else {
                 setError(
-                    cardsData.message ||
-                    "Unable to load the network."
+                    cardsData.message || "Unable to load the network."
                 );
             }
         } catch (error) {
-            console.error(
-                "Lobby loading error:",
-                error
-            );
-
-            setError(
-                "Unable to connect to the InstaCard network."
-            );
+            console.error("Lobby loading error:", error);
+            setError("Unable to connect to the InstaCard network.");
         } finally {
             setLoading(false);
         }
     }, [navigate]);
-
     useEffect(() => {
         // Data fetching on mount is intentional.
         // eslint-disable-next-line react-hooks/set-state-in-effect
         fetchLobbyData();
     }, [fetchLobbyData]);
-
+    /* =========================================================
+       UNREAD MESSAGE COUNT
+    ========================================================= */
+    useEffect(() => {
+        const fetchUnreadCount = async () => {
+            try {
+                const token = localStorage.getItem("token");
+                if (!token) return;
+                const response = await fetch(
+                    "http://localhost:5000/api/messages/unread-count",
+                    {
+                        headers: {
+                            Authorization: `Bearer ${token}`,
+                        },
+                    }
+                );
+                if (!response.ok) {
+                    throw new Error("Failed to fetch unread count");
+                }
+                const data = await response.json();
+                setUnreadCount(data.unreadCount ?? 0);
+            } catch (error) {
+                console.error("Unread count error:", error);
+            }
+        }; fetchUnreadCount();
+        const intervalId = setInterval(fetchUnreadCount, 3000);
+        return () => clearInterval(intervalId);
+    }, []);
     /* =========================================================
        MOUSE
     ========================================================= */
-
     const handleMouseMove = (event) => {
         setMouse({
             x: event.clientX,
             y: event.clientY,
         });
     };
-
     /* =========================================================
        HELPERS
     ========================================================= */
-
     const normalizeText = (value) => {
         if (typeof value !== "string") {
             return "";
         }
-
-        return value
-            .trim()
-            .replace(/\s+/g, " ")
-            .toLowerCase();
+        return value.trim().replace(/\s+/g, " ").toLowerCase();
     };
-
     const getInitial = (name) =>
         name?.charAt(0)?.toUpperCase() || "?";
-
     const getAvatarImage = (card) => {
         if (
             card?.avatar &&
@@ -168,186 +128,91 @@ const Lobby = () => {
         ) {
             return card.avatar.url;
         }
-
         return null;
     };
-
     /* =========================================================
        NETWORK CARDS
     ========================================================= */
-
     const otherCards = useMemo(() => {
         return cards.filter(
             (card) =>
                 !myCard ||
-                String(card._id) !==
-                String(myCard._id)
+                String(card._id) !== String(myCard._id)
         );
     }, [cards, myCard]);
-
     /* =========================================================
        AVAILABLE SKILLS
     ========================================================= */
-
     const availableSkills = useMemo(() => {
         const skillMap = new Map();
-
         otherCards.forEach((card) => {
             if (!Array.isArray(card.skills)) {
                 return;
             }
-
             card.skills.forEach((skill) => {
-                if (
-                    typeof skill !== "string" ||
-                    !skill.trim()
-                ) {
+                if (typeof skill !== "string" || !skill.trim()) {
                     return;
                 }
-
-                const normalized =
-                    skill
-                        .trim()
-                        .replace(/\s+/g, " ");
-
-                const key =
-                    normalized.toLowerCase();
-
+                const normalized = skill
+                    .trim()
+                    .replace(/\s+/g, " ");
+                const key = normalized.toLowerCase();
                 if (!skillMap.has(key)) {
-                    skillMap.set(
-                        key,
-                        normalized
-                    );
+                    skillMap.set(key, normalized);
                 }
             });
         });
-
-        return Array.from(
-            skillMap.values()
-        )
-            .sort((a, b) =>
-                a.localeCompare(b)
-            )
+        return Array.from(skillMap.values())
+            .sort((a, b) => a.localeCompare(b))
             .slice(0, 12);
     }, [otherCards]);
-
     /* =========================================================
        FILTER NETWORK
     ========================================================= */
-
     const filteredCards = useMemo(() => {
-        const query =
-            normalizeText(search);
-
-        const selectedSkill =
-            normalizeText(activeSkill);
-
+        const query = normalizeText(search);
+        const selectedSkill = normalizeText(activeSkill);
         return otherCards.filter((card) => {
-            const name =
-                normalizeText(card.name);
-
-            const role =
-                normalizeText(card.role);
-
-            const skills = Array.isArray(
-                card.skills
-            )
+            const name = normalizeText(card.name);
+            const role = normalizeText(card.role);
+            const skills = Array.isArray(card.skills)
                 ? card.skills
-                    .filter(
-                        (skill) =>
-                            typeof skill ===
-                            "string"
-                    )
-                    .map((skill) =>
-                        normalizeText(skill)
-                    )
+                    .filter((skill) => typeof skill === "string")
+                    .map((skill) => normalizeText(skill))
                 : [];
-
             const matchesSearch =
                 !query ||
                 name.includes(query) ||
                 role.includes(query) ||
-                skills.some((skill) =>
-                    skill.includes(query)
-                );
-
+                skills.some((skill) => skill.includes(query));
             const matchesSkill =
                 activeSkill === "ALL" ||
-                skills.some(
-                    (skill) =>
-                        skill === selectedSkill
-                );
-
-            return (
-                matchesSearch &&
-                matchesSkill
-            );
+                skills.some((skill) => skill === selectedSkill);
+            return matchesSearch && matchesSkill;
         });
-    }, [
-        otherCards,
-        search,
-        activeSkill,
-    ]);
-
+    }, [otherCards, search, activeSkill]);
     /* =========================================================
        CLEAR FILTERS
     ========================================================= */
-
     const clearFilters = () => {
         setSearch("");
         setActiveSkill("ALL");
     };
-
     /* =========================================================
        MESSAGE
     ========================================================= */
-
     const handleMessage = async (card) => {
-        console.log(
-            "MESSAGE CLICKED:",
-            card
-        );
-
         try {
-            const token =
-                localStorage.getItem("token");
-
-            console.log(
-                "TOKEN EXISTS:",
-                !!token
-            );
-
+            const token = localStorage.getItem("token");
             if (!token) {
                 navigate("/login");
                 return;
             }
-
-            /*
-                IMPORTANT:
-
-                card._id = Card ID
-                card.user  = User ID
-
-                The conversation API expects
-                the USER ID.
-            */
-
+            // The conversation API expects the USER ID, not the card ID.
             const targetUserId =
                 typeof card.user === "object"
-                    ? card.user?._id ||
-                      card.user?.id
+                    ? card.user?._id || card.user?.id
                     : card.user;
-
-            console.log(
-                "CARD ID:",
-                card?._id
-            );
-
-            console.log(
-                "TARGET USER ID:",
-                targetUserId
-            );
-
             if (!targetUserId) {
                 console.error(
                     "Cannot start conversation: user ID missing.",
@@ -355,7 +220,6 @@ const Lobby = () => {
                 );
                 return;
             }
-
             const response = await fetch(
                 `http://localhost:5000/api/conversations/${targetUserId}`,
                 {
@@ -365,101 +229,65 @@ const Lobby = () => {
                     },
                 }
             );
-
-            console.log(
-                "CONVERSATION RESPONSE STATUS:",
-                response.status
-            );
-
-            const data =
-                await response.json();
-
-            console.log(
-                "CONVERSATION RESPONSE:",
-                data
-            );
-
+            const data = await response.json();
             if (!response.ok) {
                 throw new Error(
-                    data.message ||
-                    "Unable to start conversation."
+                    data.message || "Unable to start conversation."
                 );
             }
-
-            console.log(
-                "CONVERSATION CREATED/FOUND:",
-                data.conversation
-            );
-
             navigate("/messages", {
                 state: {
-                    conversation:
-                        data.conversation,
+                    conversation: data.conversation,
                 },
             });
         } catch (error) {
-            console.error(
-                "Start conversation error:",
-                error
-            );
+            console.error("Start conversation error:", error);
         }
     };
-
     /* =========================================================
        RENDER
     ========================================================= */
-
     return (
         <main
             className={styles.lobby}
-            onMouseMove={handleMouseMove}
-        >
-            {/* =====================================================
-                AMBIENT 3D
-            ===================================================== */}
-
+            onMouseMove={handleMouseMove}>
+            {/* AMBIENT 3D */}
             <div className={styles.gridPlane} />
-
             <div className={styles.orbit}>
-                <div
-                    className={styles.orbitRing}
-                />
-
-                <div
-                    className={
-                        styles.orbitRingInner
-                    }
-                />
-
-                <div
-                    className={styles.orbitDot}
-                />
+                <div className={styles.orbitRing} />
+                <div className={styles.orbitRingInner} />
+                <div className={styles.orbitDot} />
             </div>
-
             <div className={styles.glowOrb} />
-
-            {/* =====================================================
-                NAVIGATION
-            ===================================================== */}
-
+            {/* NAVIGATION */}
             <nav className={styles.nav}>
                 <div className={styles.brand}>
                     INSTACARD
                     <span>®</span>
                 </div>
-
                 <div className={styles.navCenter}>
                     <span>LOBBY</span>
                     <span>NETWORK</span>
                 </div>
-
                 <div className={styles.navRight}>
                     <span>
-                        {myCard
-                            ? myCard.name
-                            : "WELCOME"}
+                        {myCard ? myCard.name : "WELCOME"}
                     </span>
-
+                    {/* TELEGRAM MESSAGES ICON + UNREAD BADGE */}
+                    <button
+                        type="button"
+                        className={styles.messageButton}
+                        onClick={() => navigate("/messages")}
+                        aria-label={`Open messages, ${unreadCount} unread`}
+                        title="Messages"
+                    >
+                        <img src="public/telegram.svg" alt="" aria-hidden="true" />
+                        {unreadCount > 0 && (
+                            <span className={styles.unreadBadge}>
+                                {unreadCount > 99 ? "99+" : unreadCount}
+                            </span>
+                        )}
+                    </button>
                     <button
                         type="button"
                         onClick={() =>
@@ -470,205 +298,86 @@ const Lobby = () => {
                             )
                         }
                     >
-                        {myCard
-                            ? "EDIT CARD"
-                            : "BUILD CARD"}
-
+                        {myCard ? "EDIT CARD" : "BUILD CARD"}
                         <span>↗</span>
                     </button>
-
                     <button
                         type="button"
-                        onClick={() =>
-                            setShowLogoutModal(
-                                true
-                            )
-                        }
+                        onClick={() => setShowLogoutModal(true)}
                     >
                         LOGOUT
                     </button>
                 </div>
             </nav>
-
-            {/* =====================================================
-                HERO
-            ===================================================== */}
-
+            {/* HERO */}
             <section className={styles.hero}>
-                <div
-                    className={
-                        styles.heroMeta
-                    }
-                >
+                <div className={styles.heroMeta}>
                     <span>01</span>
-
-                    <span>
-                        DIGITAL IDENTITY NETWORK
-                    </span>
-
+                    <span>DIGITAL IDENTITY NETWORK</span>
                     <span>2026</span>
                 </div>
-
-                <div
-                    className={
-                        styles.heroTitle
-                    }
-                >
+                <div className={styles.heroTitle}>
                     <div>YOUR</div>
-
-                    <div
-                        className={
-                            styles.titleOutline
-                        }
-                    >
+                    <div className={styles.titleOutline}>
                         NETWORK
                     </div>
-
-                    <div
-                        className={
-                            styles.titleBottom
-                        }
-                    >
+                    <div className={styles.titleBottom}>
                         <span>YOUR</span>
                         <span>SPACE.</span>
                     </div>
                 </div>
-
-                <p
-                    className={
-                        styles.heroDescription
-                    }
-                >
+                <p className={styles.heroDescription}>
                     Discover people.
                     <br />
                     Build your identity.
                     <br />
                     Create connections.
                 </p>
-
-                <div
-                    className={
-                        styles.scrollIndicator
-                    }
-                >
+                <div className={styles.scrollIndicator}>
                     <span>SCROLL</span>
                     <span>↓</span>
                 </div>
             </section>
-
-            {/* =====================================================
-                YOUR CARD
-            ===================================================== */}
-
-            <section
-                className={
-                    styles.myCardSection
-                }
-            >
-                <div
-                    className={
-                        styles.sectionLabel
-                    }
-                >
+            {/* YOUR CARD */}
+            <section className={styles.myCardSection}>
+                <div className={styles.sectionLabel}>
                     <span>02</span>
-
-                    <span>
-                        YOUR INSTACARD
-                    </span>
-
-                    <strong>
-                        {myCard
-                            ? "ACTIVE"
-                            : "NEW"}
-                    </strong>
+                    <span>YOUR INSTACARD</span>
+                    <strong>{myCard ? "ACTIVE" : "NEW"}</strong>
                 </div>
-
                 {loading ? (
-                    <div
-                        className={
-                            styles.loading
-                        }
-                    >
-                        <span>
-                            LOADING YOUR IDENTITY
-                        </span>
-
-                        <div
-                            className={
-                                styles.loader
-                            }
-                        />
+                    <div className={styles.loading}>
+                        <span>LOADING YOUR IDENTITY</span>
+                        <div className={styles.loader} />
                     </div>
                 ) : myCard ? (
-                    <div
-                        className={
-                            styles.myCardLayout
-                        }
-                    >
+                    <div className={styles.myCardLayout}>
                         <div
-                            className={
-                                styles.myCardPreview
-                            }
+                            className={styles.myCardPreview}
                             onClick={() =>
-                                navigate(
-                                    `/profile/${myCard._id}`
-                                )
+                                navigate(`/profile/${myCard._id}`)
                             }
                         >
-                            <InstaCard
-                                card={myCard}
-                            />
+                            <InstaCard card={myCard} />
                         </div>
-
-                        <div
-                            className={
-                                styles.myCardInfo
-                            }
-                        >
-                            <span>
-                                THIS IS YOUR IDENTITY.
-                            </span>
-
-                            <h2>
-                                Make it
-                                <br />
-                                unforgettable.
-                            </h2>
-
-                            <p>
-                                Your InstaCard is
-                                your digital
-                                identity. Keep it
-                                sharp, current and
-                                yours.
-                            </p>
-
-                            <div
-                                className={
-                                    styles.actionGroup
-                                }
-                            >
+                        <div className={styles.myCardInfo}>
+                            <span>THIS IS YOUR IDENTITY.</span>
+                            <h2>Make it<br />unforgettable.</h2>
+                            <p>Your InstaCard is your digital identity.Keep it sharp, current and yours.</p>
+                            <div className={styles.actionGroup}>
                                 <button
                                     type="button"
                                     onClick={() =>
-                                        navigate(
-                                            "/builder?edit=true"
-                                        )
-                                    }
+                                        navigate("/builder?edit=true")}
                                 >
                                     EDIT CARD
                                     <span>↗</span>
                                 </button>
-
                                 <button
                                     type="button"
-                                    className={
-                                        styles.secondaryButton
-                                    }
+                                    className={styles.secondaryButton}
                                     onClick={() =>
-                                        navigate(
-                                            `/profile/${myCard._id}`
-                                        )
+                                        navigate(`/profile/${myCard._id}`)
                                     }
                                 >
                                     VIEW CARD
@@ -678,28 +387,16 @@ const Lobby = () => {
                         </div>
                     </div>
                 ) : (
-                    <div
-                        className={
-                            styles.createPanel
-                        }
-                    >
-                        <span>
-                            NO CARD YET
-                        </span>
-
+                    <div className={styles.createPanel}>
+                        <span>NO CARD YET</span>
                         <h2>
                             BUILD YOUR
                             <br />
                             IDENTITY.
                         </h2>
-
                         <button
                             type="button"
-                            onClick={() =>
-                                navigate(
-                                    "/builder"
-                                )
-                            }
+                            onClick={() => navigate("/builder")}
                         >
                             CREATE INSTACARD
                             <span>↗</span>
@@ -707,555 +404,236 @@ const Lobby = () => {
                     </div>
                 )}
             </section>
-
-            {/* =====================================================
-                NETWORK
-            ===================================================== */}
-
-            <section
-                className={styles.network}
-            >
-                <div
-                    className={
-                        styles.sectionLabel
-                    }
-                >
+            {/* NETWORK */}
+            <section className={styles.network}>
+                <div className={styles.sectionLabel}>
                     <span>03</span>
-
-                    <span>
-                        DISCOVER THE NETWORK
-                    </span>
-
+                    <span>DISCOVER THE NETWORK</span>
                     <strong>
-                        {String(
-                            otherCards.length
-                        ).padStart(2, "0")}
+                        {String(otherCards.length).padStart(2, "0")}
                     </strong>
                 </div>
-
-                <div
-                    className={
-                        styles.networkIntro
-                    }
-                >
-                    <h2>
-                        PEOPLE
-                        <br />
-                        <span>BEHIND</span>
-                        <br />
-                        THE CARDS.
-                    </h2>
-
-                    <p>
-                        Explore digital
-                        identities created by
-                        people across the
-                        network.
-                    </p>
+                <div className={styles.networkIntro}>
+                    <h2>PEOPLE<br /><span>BEHIND</span><br />THE CARDS.</h2>
+                    <p>Explore digital identities created by people across the network.</p>
                 </div>
-
-                {/* =================================================
-                    SEARCH + FILTER
-                ================================================= */}
-
-                {!loading &&
-                    otherCards.length > 0 && (
-                        <div
-                            className={
-                                styles.discoveryTools
-                            }
-                        >
-                            <div
-                                className={
-                                    styles.searchBox
+                {/* SEARCH + FILTER */}
+                {!loading && otherCards.length > 0 && (
+                    <div className={styles.discoveryTools}>
+                        <div className={styles.searchBox}>
+                            <span className={styles.searchIcon}>/</span>
+                            <input type="text" value={search}
+                                onChange={(event) =>
+                                    setSearch(event.target.value)
                                 }
-                            >
-                                <span
-                                    className={
-                                        styles.searchIcon
-                                    }
-                                >
-                                    /
-                                </span>
-
-                                <input
-                                    type="text"
-                                    value={search}
-                                    onChange={(event) =>
-                                        setSearch(
-                                            event.target
-                                                .value
-                                        )
-                                    }
-                                    placeholder="SEARCH NAME, ROLE OR SKILL..."
-                                    aria-label="Search people by name, role or skill"
-                                />
-
-                                {search && (
-                                    <button
-                                        type="button"
-                                        className={
-                                            styles.clearSearch
-                                        }
-                                        onClick={() =>
-                                            setSearch(
-                                                ""
-                                            )
-                                        }
-                                        aria-label="Clear search"
-                                    >
-                                        ×
-                                    </button>
-                                )}
-                            </div>
-
-                            <div
-                                className={
-                                    styles.filterBar
-                                }
-                            >
+                                placeholder="SEARCH NAME, ROLE OR SKILL..."
+                                aria-label="Search people by name, role or skill"
+                            />
+                            {search && (
                                 <button
                                     type="button"
-                                    className={`${styles.filterButton} ${
-                                        activeSkill ===
-                                        "ALL"
-                                            ? styles.filterActive
-                                            : ""
-                                    }`}
-                                    onClick={() =>
-                                        setActiveSkill(
-                                            "ALL"
-                                        )
-                                    }
+                                    className={styles.clearSearch}
+                                    onClick={() => setSearch("")}
+                                    aria-label="Clear search"
                                 >
-                                    ALL
+                                    ×
                                 </button>
-
-                                {availableSkills.map(
-                                    (skill) => (
-                                        <button
-                                            type="button"
-                                            key={skill}
-                                            className={`${styles.filterButton} ${
-                                                activeSkill.toLowerCase() ===
-                                                skill.toLowerCase()
-                                                    ? styles.filterActive
-                                                    : ""
-                                            }`}
-                                            onClick={() =>
-                                                setActiveSkill(
-                                                    skill
-                                                )
-                                            }
-                                        >
-                                            {skill}
-                                        </button>
-                                    )
-                                )}
-                            </div>
-
-                            <div
-                                className={
-                                    styles.resultsMeta
-                                }
-                            >
-                                <span>
-                                    {filteredCards.length ===
-                                    1
-                                        ? "01 PERSON FOUND"
-                                        : `${String(
-                                              filteredCards.length
-                                          ).padStart(
-                                              2,
-                                              "0"
-                                          )} PEOPLE FOUND`}
-                                </span>
-
-                                <span>
-                                    {activeSkill !==
-                                    "ALL"
-                                        ? `SKILL / ${activeSkill.toUpperCase()}`
-                                        : search
-                                          ? `SEARCH / ${search.toUpperCase()}`
-                                          : "FILTER / ALL"}
-                                </span>
-
-                                {(search ||
-                                    activeSkill !==
-                                        "ALL") && (
-                                    <button
-                                        type="button"
-                                        onClick={
-                                            clearFilters
-                                        }
-                                    >
-                                        CLEAR FILTERS
-                                        <span>×</span>
-                                    </button>
-                                )}
-                            </div>
+                            )}
                         </div>
-                    )}
-
-                {/* =================================================
-                    NETWORK STATES
-                ================================================= */}
-
+                        <div className={styles.filterBar}>
+                            <button
+                                type="button"
+                                className={`${styles.filterButton} ${activeSkill === "ALL"
+                                    ? styles.filterActive
+                                    : ""
+                                    }`}
+                                onClick={() => setActiveSkill("ALL")}
+                            >
+                                ALL
+                            </button>
+                            {availableSkills.map((skill) => (
+                                <button
+                                    type="button"
+                                    key={skill}
+                                    className={`${styles.filterButton} ${activeSkill.toLowerCase() ===
+                                        skill.toLowerCase()
+                                        ? styles.filterActive
+                                        : ""
+                                        }`}
+                                    onClick={() => setActiveSkill(skill)}
+                                >
+                                    {skill}
+                                </button>
+                            ))}
+                        </div>
+                        <div className={styles.resultsMeta}>
+                            <span>
+                                {filteredCards.length === 1
+                                    ? "01 PERSON FOUND"
+                                    : `${String(filteredCards.length).padStart(
+                                        2,
+                                        "0"
+                                    )} PEOPLE FOUND`}
+                            </span>
+                            <span>
+                                {activeSkill !== "ALL"
+                                    ? `SKILL / ${activeSkill.toUpperCase()}`
+                                    : search
+                                        ? `SEARCH / ${search.toUpperCase()}`
+                                        : "FILTER / ALL"}
+                            </span>
+                            {(search || activeSkill !== "ALL") && (
+                                <button
+                                    type="button"
+                                    onClick={clearFilters}
+                                >
+                                    CLEAR FILTERS
+                                    <span>×</span>
+                                </button>
+                            )}
+                        </div>
+                    </div>
+                )}
+                {/* NETWORK STATES */}
                 {loading ? (
-                    <div
-                        className={
-                            styles.loading
-                        }
-                    >
-                        <span>
-                            LOADING NETWORK
-                        </span>
-
-                        <div
-                            className={
-                                styles.loader
-                            }
-                        />
+                    <div className={styles.loading}>
+                        <span>LOADING NETWORK</span>
+                        <div className={styles.loader} />
                     </div>
                 ) : error ? (
-                    <div
-                        className={
-                            styles.empty
-                        }
-                    >
-                        <span>
-                            ERROR / NETWORK
-                        </span>
-
-                        <h3>
-                            NETWORK
-                            <br />
-                            UNAVAILABLE.
-                        </h3>
-
-                        <p>
-                            {error}
-                        </p>
-
+                    <div className={styles.empty}>
+                        <span>ERROR / NETWORK</span>
+                        <h3>NETWORK<br />UNAVAILABLE.</h3>
+                        <p>{error}</p>
                         <button
                             type="button"
-                            className={
-                                styles.emptyButton
-                            }
-                            onClick={
-                                fetchLobbyData
-                            }
+                            className={styles.emptyButton}
+                            onClick={fetchLobbyData}
                         >
                             TRY AGAIN
                             <span>↻</span>
                         </button>
                     </div>
                 ) : otherCards.length === 0 ? (
-                    <div
-                        className={
-                            styles.empty
-                        }
-                    >
-                        <span>
-                            00 / NETWORK
-                        </span>
-
-                        <h3>
-                            YOU ARE EARLY.
-                            <br />
-                            THAT'S GOOD.
-                        </h3>
-
-                        <p>
-                            Create your card and
-                            become the first
-                            connection.
-                        </p>
-
+                    <div className={styles.empty}>
+                        <span>00 / NETWORK</span>
+                        <h3>YOU ARE EARLY.<br />THAT'S GOOD.</h3>
+                        <p> Create your card and become the firstconnection.</p>
                         {!myCard && (
                             <button
                                 type="button"
-                                className={
-                                    styles.emptyButton
-                                }
-                                onClick={() =>
-                                    navigate(
-                                        "/builder"
-                                    )
-                                }
+                                className={styles.emptyButton}
+                                onClick={() => navigate("/builder")}
                             >
                                 CREATE INSTACARD
                                 <span>↗</span>
                             </button>
                         )}
                     </div>
-                ) : filteredCards.length ===
-                  0 ? (
-                    <div
-                        className={
-                            styles.empty
-                        }
-                    >
-                        <span>
-                            00 / NO MATCH
-                        </span>
-
-                        <h3>
-                            NOTHING
-                            <br />
-                            FOUND.
-                        </h3>
-
-                        <p>
-                            Try another name,
-                            role or skill.
-                        </p>
-
+                ) : filteredCards.length === 0 ? (
+                    <div className={styles.empty}>
+                        <span>00 / NO MATCH</span>
+                        <h3>NOTHING<br />FOUND.</h3>
+                        <p>Try another name, role or skill.</p>
                         <button
                             type="button"
-                            className={
-                                styles.emptyButton
-                            }
-                            onClick={
-                                clearFilters
-                            }
+                            className={styles.emptyButton}
+                            onClick={clearFilters}
                         >
                             RESET SEARCH
                             <span>↗</span>
                         </button>
                     </div>
                 ) : (
-                    <div
-                        className={
-                            styles.cardGrid
-                        }
-                    >
-                        {filteredCards.map(
-                            (card, index) => (
-                                <article
-                                    key={card._id}
-                                    className={
-                                        styles.networkCard
+                    <div className={styles.cardGrid}>
+                        {filteredCards.map((card, index) => (
+                            <article
+                                key={card._id}
+                                className={styles.networkCard}
+                                onMouseEnter={() => setHovered(card._id)}
+                                onMouseLeave={() => setHovered(null)}
+                                onClick={(event) => {
+                                    if (
+                                        event.target.closest("button") ||
+                                        event.target.closest("a")
+                                    ) {
+                                        return;
                                     }
-                                    onMouseEnter={() =>
-                                        setHovered(
-                                            card._id
-                                        )
-                                    }
-                                    onMouseLeave={() =>
-                                        setHovered(
-                                            null
-                                        )
-                                    }
-                                    onClick={(event) => {
-                                        if (
-                                            event.target.closest(
-                                                "button"
-                                            ) ||
-                                            event.target.closest(
-                                                "a"
-                                            )
-                                        ) {
-                                            return;
-                                        }
-
-                                        navigate(
-                                            `/profile/${card._id}`
-                                        );
-                                    }}
-                                >
-                                    <div
-                                        className={
-                                            styles.cardIndex
-                                        }
-                                    >
+                                    navigate(`/profile/${card._id}`);
+                                }}
+                            >
+                                <div className={styles.cardIndex}>
+                                    <span>
+                                        {String(index + 1).padStart(2, "0")}
+                                    </span>
+                                    <span>{card.role || "CREATOR"}</span>
+                                </div>
+                                <div className={styles.cardPreview}>
+                                    <InstaCard
+                                        card={card}
+                                        onMessage={handleMessage}
+                                    />
+                                </div>
+                                <div className={styles.networkCardMeta}>
+                                    <div>
+                                        <strong>{card.name}</strong>
                                         <span>
-                                            {String(
-                                                index +
-                                                    1
-                                            ).padStart(
-                                                2,
-                                                "0"
-                                            )}
-                                        </span>
-
-                                        <span>
-                                            {card.role ||
-                                                "CREATOR"}
+                                            {card.role || "DIGITAL CREATOR"}
                                         </span>
                                     </div>
-
-                                    <div
-                                        className={
-                                            styles.cardPreview
-                                        }
-                                    >
-                                        <InstaCard
-                                            card={card}
-                                            onMessage={
-                                                handleMessage
-                                            }
-                                        />
-                                    </div>
-
-                                    <div
-                                        className={
-                                            styles.networkCardMeta
-                                        }
-                                    >
-                                        <div>
-                                            <strong>
-                                                {
-                                                    card.name
-                                                }
-                                            </strong>
-
-                                            <span>
-                                                {card.role ||
-                                                    "DIGITAL CREATOR"}
-                                            </span>
-                                        </div>
-
-                                        <span
-                                            className={
-                                                styles.cardArrow
-                                            }
-                                        >
-                                            ↗
-                                        </span>
-                                    </div>
-                                </article>
-                            )
-                        )}
+                                    <span className={styles.cardArrow}>
+                                        ↗
+                                    </span>
+                                </div>
+                            </article>
+                        ))}
                     </div>
                 )}
             </section>
-
-            {/* =====================================================
-                CURSOR PREVIEW
-            ===================================================== */}
-
+            {/* CURSOR PREVIEW */}
             {hovered && (
                 <div
-                    className={
-                        styles.cursorPreview
-                    }
+                    className={styles.cursorPreview}
                     style={{
                         left: mouse.x + 25,
                         top: mouse.y + 25,
                     }}
                 >
                     {(() => {
-                        const card =
-                            filteredCards.find(
-                                (item) =>
-                                    item._id ===
-                                    hovered
-                            );
-
+                        const card = filteredCards.find(
+                            (item) => item._id === hovered
+                        );
                         if (!card) {
                             return null;
                         }
-
-                        const avatar =
-                            getAvatarImage(
-                                card
-                            );
-
+                        const avatar = getAvatarImage(card);
                         return (
                             <>
-                                <div
-                                    className={
-                                        styles.previewTop
-                                    }
-                                >
-                                    <span>
-                                        INSTANT
-                                    </span>
-
+                                <div className={styles.previewTop}>
+                                    <span>INSTANT</span>
                                     <span>
                                         #
                                         {String(
-                                            filteredCards.indexOf(
-                                                card
-                                            ) + 1
-                                        ).padStart(
-                                            2,
-                                            "0"
-                                        )}
+                                            filteredCards.indexOf(card) + 1
+                                        ).padStart(2, "0")}
                                     </span>
                                 </div>
-
-                                <div
-                                    className={
-                                        styles.previewAvatar
-                                    }
-                                >
+                                <div className={styles.previewAvatar}>
                                     {avatar ? (
-                                        <img
-                                            src={
-                                                avatar
-                                            }
-                                            alt={
-                                                card.name
-                                            }
-                                        />
+                                        <img src={avatar} alt={card.name} />
                                     ) : (
-                                        <span>
-                                            {getInitial(
-                                                card.name
-                                            )}
-                                        </span>
+                                        <span>{getInitial(card.name)}</span>
                                     )}
                                 </div>
-
-                                <h3>
-                                    {card.name}
-                                </h3>
-
-                                <p>
-                                    {card.role ||
-                                        "DIGITAL CREATOR"}
-                                </p>
-
-                                <div
-                                    className={
-                                        styles.previewLine
-                                    }
-                                />
-
-                                <div
-                                    className={
-                                        styles.previewSkills
-                                    }
-                                >
-                                    {card.skills
-                                        ?.slice(
-                                            0,
-                                            4
-                                        )
-                                        .map(
-                                            (
-                                                skill
-                                            ) => (
-                                                <span
-                                                    key={
-                                                        skill
-                                                    }
-                                                >
-                                                    {
-                                                        skill
-                                                    }
-                                                </span>
-                                            )
-                                        )}
+                                <h3>{card.name}</h3>
+                                <p>{card.role || "DIGITAL CREATOR"}</p>
+                                <div className={styles.previewLine} />
+                                <div className={styles.previewSkills}>
+                                    {card.skills?.slice(0, 4).map((skill) => (
+                                        <span key={skill}>{skill}</span>
+                                    ))}
                                 </div>
-
-                                <div
-                                    className={
-                                        styles.previewFooter
-                                    }
-                                >
+                                <div className={styles.previewFooter}>
                                     VIEW PROFILE ↗
                                 </div>
                             </>
@@ -1263,133 +641,58 @@ const Lobby = () => {
                     })()}
                 </div>
             )}
-
-            {/* =====================================================
-                FOOTER
-            ===================================================== */}
-
-            <footer
-                className={styles.footer}
-            >
-                <span>
-                    INSTACARD®
-                </span>
-
-                <span>
-                    CONNECT / CREATE / DISCOVER
-                </span>
-
+            {/* FOOTER */}
+            <footer className={styles.footer}>
+                <span>INSTACARD®</span>
+                <span>CONNECT / CREATE / DISCOVER</span>
                 <span>
                     {myCard
                         ? "YOUR NETWORK AWAITS"
                         : "CREATE YOUR IDENTITY"}
                 </span>
             </footer>
-
-            {/* =====================================================
-                LOGOUT MODAL
-            ===================================================== */}
-
+            {/* LOGOUT MODAL */}
             {showLogoutModal && (
                 <div
-                    className={
-                        styles.logoutOverlay
-                    }
-                    onClick={() =>
-                        setShowLogoutModal(
-                            false
-                        )
-                    }
+                    className={styles.logoutOverlay}
+                    onClick={() => setShowLogoutModal(false)}
                 >
                     <div
-                        className={
-                            styles.logoutModal
-                        }
-                        onClick={(event) =>
-                            event.stopPropagation()
-                        }
+                        className={styles.logoutModal}
+                        onClick={(event) => event.stopPropagation()}
                     >
-                        <div
-                            className={
-                                styles.logoutModalTop
-                            }
-                        >
-                            <span>
-                                ACCOUNT
-                            </span>
-
+                        <div className={styles.logoutModalTop}>
+                            <span>ACCOUNT</span>
                             <button
                                 type="button"
-                                onClick={() =>
-                                    setShowLogoutModal(
-                                        false
-                                    )
-                                }
+                                onClick={() => setShowLogoutModal(false)}
                                 aria-label="Close logout dialog"
                             >
                                 ×
                             </button>
                         </div>
-
-                        <div
-                            className={
-                                styles.logoutModalContent
-                            }
-                        >
-                            <span
-                                className={
-                                    styles.logoutModalNumber
-                                }
-                            >
+                        <div className={styles.logoutModalContent}>
+                            <span className={styles.logoutModalNumber}>
                                 07
                             </span>
-
-                            <h2>
-                                LOGOUT
-                            </h2>
-
-                            <p>
-                                Are you sure you want to
-                                logout?
-                            </p>
+                            <h2>LOGOUT</h2>
+                            <p>Are you sure you want to logout?</p>
                         </div>
-
-                        <div
-                            className={
-                                styles.logoutModalActions
-                            }
-                        >
+                        <div className={styles.logoutModalActions}>
                             <button
                                 type="button"
-                                className={
-                                    styles.cancelButton
-                                }
-                                onClick={() =>
-                                    setShowLogoutModal(
-                                        false
-                                    )
-                                }
+                                className={styles.cancelButton}
+                                onClick={() => setShowLogoutModal(false)}
                             >
                                 CANCEL
                             </button>
-
                             <button
                                 type="button"
-                                className={
-                                    styles.confirmLogoutButton
-                                }
+                                className={styles.confirmLogoutButton}
                                 onClick={() => {
-                                    localStorage.removeItem(
-                                        "token"
-                                    );
-
-                                    localStorage.removeItem(
-                                        "user"
-                                    );
-
-                                    navigate(
-                                        "/login"
-                                    );
+                                    localStorage.removeItem("token");
+                                    localStorage.removeItem("user");
+                                    navigate("/login");
                                 }}
                             >
                                 LOGOUT
@@ -1401,5 +704,4 @@ const Lobby = () => {
         </main>
     );
 };
-
 export default Lobby;

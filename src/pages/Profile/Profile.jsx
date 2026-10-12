@@ -1,4 +1,4 @@
-import  { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import html2canvas from "html2canvas";
 
@@ -17,6 +17,73 @@ const Profile = () => {
     const [error, setError] = useState("");
     const [copied, setCopied] = useState(false);
     const [downloading, setDownloading] = useState(false);
+
+
+
+    const handleMessage = async () => {
+        try {
+            const token = localStorage.getItem("token");
+
+            if (!token) {
+                navigate("/login");
+                return;
+            }
+
+            const targetUserId =
+                typeof card?.user === "object"
+                    ? card.user?._id || card.user?.id
+                    : card?.user;
+
+            if (!targetUserId) {
+                console.error(
+                    "Cannot start conversation: user ID is missing.",
+                    card
+                );
+                alert("Unable to identify this user. Please try again.");
+                return;
+            }
+
+            if (
+                String(targetUserId) ===
+                String(currentUser?._id || currentUser?.id)
+            ) {
+                alert("This is your own profile.");
+                return;
+            }
+
+            const response = await fetch(
+                `http://localhost:5000/api/conversations/${targetUserId}`,
+                {
+                    method: "POST",
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
+            );
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(
+                    data.message || "Unable to start conversation."
+                );
+            }
+
+            if (!data.conversation) {
+                throw new Error("No conversation was returned by the server.");
+            }
+
+            navigate("/messages", {
+                state: {
+                    conversation: data.conversation,
+                },
+            });
+        } catch (error) {
+            console.error("Profile message error:", error);
+            alert(error.message || "Could not open the conversation.");
+        }
+    };
+
 
     useEffect(() => {
         const fetchProfile = async () => {
@@ -94,31 +161,31 @@ const Profile = () => {
     }, [id, navigate]);
 
     const isOwner = useMemo(() => {
-    if (!card || !currentUser) {
-        return false;
-    }
+        if (!card || !currentUser) {
+            return false;
+        }
 
-    const cardUserId =
-        typeof card.user === "object"
-            ? card.user?._id || card.user?.id
-            : card.user;
+        const cardUserId =
+            typeof card.user === "object"
+                ? card.user?._id || card.user?.id
+                : card.user;
 
-    const currentUserId =
-        currentUser._id || currentUser.id;
+        const currentUserId =
+            currentUser._id || currentUser.id;
 
-    console.log("OWNER CHECK:", {
-        cardUserId,
-        currentUserId,
-        isOwner:
+        console.log("OWNER CHECK:", {
+            cardUserId,
+            currentUserId,
+            isOwner:
+                String(cardUserId) ===
+                String(currentUserId),
+        });
+
+        return (
             String(cardUserId) ===
-            String(currentUserId),
-    });
-
-    return (
-        String(cardUserId) ===
-        String(currentUserId)
-    );
-}, [card, currentUser]);
+            String(currentUserId)
+        );
+    }, [card, currentUser]);
 
     const profileUrl = window.location.href;
 
@@ -162,9 +229,9 @@ const Profile = () => {
                 document.createElement("a");
 
             link.download = `${card.name
-                    ?.toLowerCase()
-                    .replace(/[^a-z0-9]+/g, "-")
-                    .replace(/^-|-$/g, "") ||
+                ?.toLowerCase()
+                .replace(/[^a-z0-9]+/g, "-")
+                .replace(/^-|-$/g, "") ||
                 "instacard"
                 }-instacard.png`;
 
@@ -368,12 +435,17 @@ const Profile = () => {
                     </span>
                 </div>
 
+
                 <div
                     ref={cardRef}
                     className={styles.cardWrapper}
                 >
-                    <InstaCard card={card} />
+                    <InstaCard
+                        card={card}
+                        onMessage={handleMessage}
+                    />
                 </div>
+
 
                 <div className={styles.cardActions}>
                     <button

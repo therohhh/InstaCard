@@ -1,7 +1,7 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 import Welcome from "./components/welcomepage/Welcome";
-import CursorGlow from "./components/cursor/CursorGlow";
+
 
 import Builder from "./pages/Builder/Builder";
 import Login from "./pages/Login/Login";
@@ -15,7 +15,7 @@ import ProtectedRoute from "./components/auth/ProtectedRoute";
 function App() {
   return (
     <BrowserRouter>
-      <CursorGlow />
+      
 
       <Routes>
 

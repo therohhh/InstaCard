@@ -1,7 +1,6 @@
 import {
     useEffect,
     useMemo,
-    useRef,
     useState,
 } from "react";
 import {
@@ -22,7 +21,7 @@ const Messages = () => {
     const [messages, setMessages] = useState([]);
     const [messagesLoading, setMessagesLoading] = useState(false);
     const [messagesError, setMessagesError] = useState("");
-    const messagesEndRef = useRef(null);
+
     const [messageText, setMessageText] = useState("");
     const [sendingMessage, setSendingMessage] = useState(false);
 
@@ -32,19 +31,15 @@ const Messages = () => {
 
     const currentUser = useMemo(() => {
         try {
-            const storedUser =
-                localStorage.getItem("user");
+            const storedUser = localStorage.getItem("user");
 
-            return storedUser
-                ? JSON.parse(storedUser)
-                : null;
+            return storedUser ? JSON.parse(storedUser) : null;
         } catch {
             return null;
         }
     }, []);
 
-    const currentUserId =
-        currentUser?._id || currentUser?.id;
+    const currentUserId = currentUser?._id || currentUser?.id;
 
     /* =========================================================
        FETCH CONVERSATIONS
@@ -56,8 +51,7 @@ const Messages = () => {
                 setLoading(true);
                 setError("");
 
-                const token =
-                    localStorage.getItem("token");
+                const token = localStorage.getItem("token");
 
                 if (!token) {
                     navigate("/login");
@@ -68,8 +62,7 @@ const Messages = () => {
                     "http://localhost:5000/api/conversations",
                     {
                         headers: {
-                            Authorization:
-                                `Bearer ${token}`,
+                            Authorization: `Bearer ${token}`,
                         },
                     }
                 );
@@ -78,8 +71,7 @@ const Messages = () => {
 
                 if (!response.ok) {
                     throw new Error(
-                        data.message ||
-                        "Failed to load conversations"
+                        data.message || "Failed to load conversations"
                     );
                 }
 
@@ -89,14 +81,10 @@ const Messages = () => {
                         : []
                 );
             } catch (err) {
-                console.error(
-                    "Fetch conversations error:",
-                    err
-                );
+                console.error("Fetch conversations error:", err);
 
                 setError(
-                    err.message ||
-                    "Unable to load conversations."
+                    err.message || "Unable to load conversations."
                 );
             } finally {
                 setLoading(false);
@@ -106,30 +94,66 @@ const Messages = () => {
         fetchConversations();
     }, [navigate]);
 
+    /* =========================================================
+       OPEN CONVERSATION FROM LOBBY
+    ========================================================= */
+
     useEffect(() => {
-        const incomingConversation =
-            location.state?.conversation;
+        const incomingConversation = location.state?.conversation;
 
         if (!incomingConversation?._id) {
             return;
         }
-        // Navigation state intentionally initializes the selected chat.
+
+        // Navigation state initializes the selected conversation.
         // eslint-disable-next-line react-hooks/set-state-in-effect
         setSelectedConversation(incomingConversation);
 
-        // Clear navigation state so refresh doesn't
-        // repeatedly re-select the conversation.
-        window.history.replaceState(
-            {},
-            document.title
-        );
+        window.history.replaceState({}, document.title);
     }, [location.state]);
 
     /* =========================================================
-       FETCH MESSAGES
+       MARK CONVERSATION AS READ
+    ========================================================= */
+
+    const markConversationAsRead = async (
+        conversationId,
+        token
+    ) => {
+        if (!conversationId || !token) {
+            return;
+        }
+
+        try {
+            const response = await fetch(
+                `http://localhost:5000/api/messages/${conversationId}/read`,
+                {
+                    method: "PATCH",
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
+            );
+
+            if (!response.ok) {
+                const data = await response.json().catch(() => ({}));
+
+                throw new Error(
+                    data.message || "Failed to mark messages as read"
+                );
+            }
+        } catch (err) {
+            console.error("Mark messages as read error:", err);
+        }
+    };
+
+    /* =========================================================
+       FETCH MESSAGES WHEN CONVERSATION OPENS
     ========================================================= */
 
     useEffect(() => {
+        let cancelled = false;
+
         const fetchMessages = async () => {
             if (!selectedConversation?._id) {
                 setMessages([]);
@@ -141,8 +165,7 @@ const Messages = () => {
                 setMessagesLoading(true);
                 setMessagesError("");
 
-                const token =
-                    localStorage.getItem("token");
+                const token = localStorage.getItem("token");
 
                 if (!token) {
                     navigate("/login");
@@ -153,8 +176,7 @@ const Messages = () => {
                     `http://localhost:5000/api/messages/${selectedConversation._id}`,
                     {
                         headers: {
-                            Authorization:
-                                `Bearer ${token}`,
+                            Authorization: `Bearer ${token}`,
                         },
                     }
                 );
@@ -163,60 +185,71 @@ const Messages = () => {
 
                 if (!response.ok) {
                     throw new Error(
-                        data.message ||
-                        "Failed to load messages"
+                        data.message || "Failed to load messages"
                     );
                 }
+
+                if (cancelled) return;
 
                 setMessages(
                     Array.isArray(data.messages)
                         ? data.messages
                         : []
                 );
-            } catch (err) {
-                console.error(
-                    "Fetch messages error:",
-                    err
+
+                // Mark incoming messages as read after loading the chat.
+                await markConversationAsRead(
+                    selectedConversation._id,
+                    token
                 );
+            } catch (err) {
+                if (cancelled) return;
+
+                console.error("Fetch messages error:", err);
 
                 setMessagesError(
-                    err.message ||
-                    "Unable to load messages."
+                    err.message || "Unable to load messages."
                 );
 
                 setMessages([]);
             } finally {
-                setMessagesLoading(false);
+                if (!cancelled) {
+                    setMessagesLoading(false);
+                }
             }
         };
 
         fetchMessages();
-    }, [selectedConversation, navigate]);
+
+        return () => {
+            cancelled = true;
+        };
+    }, [selectedConversation?._id, navigate]);
 
     /* =========================================================
-   AUTO-REFRESH MESSAGES
-========================================================= */
+       AUTO-REFRESH MESSAGES EVERY 3 SECONDS
+    ========================================================= */
 
     useEffect(() => {
-        if (!selectedConversation?._id) {
+        const conversationId = selectedConversation?._id;
+
+        if (!conversationId) {
             return;
         }
 
+        let cancelled = false;
+
         const refreshMessages = async () => {
             try {
-                const token =
-                    localStorage.getItem("token");
+                const token = localStorage.getItem("token");
 
-                if (!token) {
-                    return;
-                }
+                if (!token) return;
 
                 const response = await fetch(
-                    `http://localhost:5000/api/messages/${selectedConversation._id}`,
+                    `http://localhost:5000/api/messages/${conversationId}`,
                     {
                         headers: {
-                            Authorization:
-                                `Bearer ${token}`,
+                            Authorization: `Bearer ${token}`,
                         },
                     }
                 );
@@ -225,53 +258,54 @@ const Messages = () => {
 
                 if (!response.ok) {
                     throw new Error(
-                        data.message ||
-                        "Failed to refresh messages"
+                        data.message || "Failed to refresh messages"
                     );
                 }
+
+                if (cancelled) return;
 
                 setMessages(
                     Array.isArray(data.messages)
                         ? data.messages
                         : []
                 );
-            } catch (err) {
-                console.error(
-                    "Auto-refresh messages error:",
-                    err
+
+                // Keep this open conversation marked as read.
+                await markConversationAsRead(
+                    conversationId,
+                    token
                 );
+            } catch (err) {
+                if (!cancelled) {
+                    console.error(
+                        "Auto-refresh messages error:",
+                        err
+                    );
+                }
             }
         };
 
-        const intervalId = setInterval(
-            refreshMessages,
-            3000
-        );
+        const intervalId = setInterval(refreshMessages, 3000);
 
         return () => {
+            cancelled = true;
             clearInterval(intervalId);
         };
-    }, [selectedConversation]);
+    }, [selectedConversation?._id]);
+
     /* =========================================================
        GET OTHER PARTICIPANT
     ========================================================= */
 
     const getOtherParticipant = (conversation) => {
-        if (
-            !Array.isArray(
-                conversation?.participants
-            )
-        ) {
+        if (!Array.isArray(conversation?.participants)) {
             return null;
         }
 
         return (
             conversation.participants.find(
                 (participant) =>
-                    String(
-                        participant?._id
-                    ) !==
-                    String(currentUserId)
+                    String(participant?._id) !== String(currentUserId)
             ) || null
         );
     };
@@ -280,31 +314,26 @@ const Messages = () => {
        SEARCH CONVERSATIONS
     ========================================================= */
 
-    const filteredConversations =
-        conversations.filter((conversation) => {
-            const person =
-                getOtherParticipant(conversation);
+    const filteredConversations = conversations.filter(
+        (conversation) => {
+            const person = getOtherParticipant(conversation);
 
             if (!person) {
                 return false;
             }
 
-            const query =
-                search.trim().toLowerCase();
+            const query = search.trim().toLowerCase();
 
             if (!query) {
                 return true;
             }
 
             return (
-                person.name
-                    ?.toLowerCase()
-                    .includes(query) ||
-                person.email
-                    ?.toLowerCase()
-                    .includes(query)
+                person.name?.toLowerCase().includes(query) ||
+                person.email?.toLowerCase().includes(query)
             );
-        });
+        }
+    );
 
     /* =========================================================
        FORMAT TIME
@@ -321,22 +350,17 @@ const Messages = () => {
             return "";
         }
 
-        return messageDate.toLocaleTimeString(
-            [],
-            {
-                hour: "2-digit",
-                minute: "2-digit",
-            }
-        );
+        return messageDate.toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+        });
     };
 
     /* =========================================================
        SELECT CONVERSATION
     ========================================================= */
 
-    const handleConversationSelect = (
-        conversation
-    ) => {
+    const handleConversationSelect = (conversation) => {
         setSelectedConversation(conversation);
         setMessageText("");
         setMessagesError("");
@@ -361,8 +385,7 @@ const Messages = () => {
             setSendingMessage(true);
             setMessagesError("");
 
-            const token =
-                localStorage.getItem("token");
+            const token = localStorage.getItem("token");
 
             if (!token) {
                 navigate("/login");
@@ -374,14 +397,10 @@ const Messages = () => {
                 {
                     method: "POST",
                     headers: {
-                        "Content-Type":
-                            "application/json",
-                        Authorization:
-                            `Bearer ${token}`,
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${token}`,
                     },
-                    body: JSON.stringify({
-                        text,
-                    }),
+                    body: JSON.stringify({ text }),
                 }
             );
 
@@ -389,62 +408,48 @@ const Messages = () => {
 
             if (!response.ok) {
                 throw new Error(
-                    data.message ||
-                    "Failed to send message"
+                    data.message || "Failed to send message"
                 );
             }
 
-            /* Add new message to chat immediately */
-            setMessages(
-                (previousMessages) => [
-                    ...previousMessages,
-                    data.data,
-                ]
-            );
+            const newMessage = data.data;
 
-            /* Clear input */
+            // Add the new message immediately.
+            setMessages((previousMessages) => [
+                ...previousMessages,
+                newMessage,
+            ]);
+
             setMessageText("");
 
-            /* Update conversation preview */
-            setConversations(
-                (previousConversations) =>
-                    previousConversations.map(
-                        (conversation) =>
-                            conversation._id ===
-                                selectedConversation._id
-                                ? {
-                                    ...conversation,
-                                    lastMessage:
-                                        data.data.text,
-                                    lastMessageAt:
-                                        data.data.createdAt,
-                                }
-                                : conversation
-                    )
+            // Update conversation preview.
+            setConversations((previousConversations) =>
+                previousConversations.map((conversation) =>
+                    conversation._id === selectedConversation._id
+                        ? {
+                              ...conversation,
+                              lastMessage: newMessage.text,
+                              lastMessageAt: newMessage.createdAt,
+                          }
+                        : conversation
+                )
             );
 
-            /* Update selected conversation */
-            setSelectedConversation(
-                (previousConversation) =>
-                    previousConversation
-                        ? {
-                            ...previousConversation,
-                            lastMessage:
-                                data.data.text,
-                            lastMessageAt:
-                                data.data.createdAt,
-                        }
-                        : previousConversation
+            // Update the selected conversation.
+            setSelectedConversation((previousConversation) =>
+                previousConversation
+                    ? {
+                          ...previousConversation,
+                          lastMessage: newMessage.text,
+                          lastMessageAt: newMessage.createdAt,
+                      }
+                    : previousConversation
             );
         } catch (err) {
-            console.error(
-                "Send message error:",
-                err
-            );
+            console.error("Send message error:", err);
 
             setMessagesError(
-                err.message ||
-                "Unable to send message."
+                err.message || "Unable to send message."
             );
         } finally {
             setSendingMessage(false);
@@ -455,38 +460,30 @@ const Messages = () => {
        SELECTED PERSON
     ========================================================= */
 
-    const selectedPerson =
-        selectedConversation
-            ? getOtherParticipant(
-                selectedConversation
-            )
-            : null;
+    const selectedPerson = selectedConversation
+        ? getOtherParticipant(selectedConversation)
+        : null;
+
+    /* =========================================================
+       RENDER
+    ========================================================= */
 
     return (
         <main className={styles.messagesPage}>
-            {/* =================================================
-                BACKGROUND
-            ================================================= */}
+            {/* BACKGROUND */}
 
             <div className={styles.gridPlane} />
             <div className={styles.glowOrb} />
 
-            {/* =================================================
-                NAVIGATION
-            ================================================= */}
+            {/* NAVIGATION */}
 
             <nav className={styles.nav}>
                 <button
                     type="button"
                     className={styles.brand}
-                    onClick={() =>
-                        navigate("/lobby")
-                    }
+                    onClick={() => navigate("/lobby")}
                 >
-                    <span
-                        className={styles.brandDot}
-                    />
-
+                    <span className={styles.brandDot} />
                     INSTACARD
                 </button>
 
@@ -497,118 +494,66 @@ const Messages = () => {
                 <div className={styles.navRight}>
                     <button
                         type="button"
-                        onClick={() =>
-                            navigate("/lobby")
-                        }
+                        onClick={() => navigate("/lobby")}
                     >
                         LOBBY
                     </button>
 
                     <button
                         type="button"
-                        onClick={() =>
-                            navigate("/profile/me")
-                        }
+                        onClick={() => navigate("/profile/me")}
                     >
                         PROFILE
                     </button>
                 </div>
             </nav>
 
-            {/* =================================================
-                MAIN MESSAGING AREA
-            ================================================= */}
+            {/* MAIN MESSAGING AREA */}
 
-            <section
-                className={styles.messagingShell}
-            >
-                {/* =================================================
-                    CONVERSATION LIST
-                ================================================= */}
+            <section className={styles.messagingShell}>
+                {/* CONVERSATION LIST */}
 
-                <aside
-                    className={
-                        styles.conversationPanel
-                    }
-                >
-                    <div
-                        className={styles.panelHeader}
-                    >
+                <aside className={styles.conversationPanel}>
+                    <div className={styles.panelHeader}>
                         <div>
-                            <span
-                                className={
-                                    styles.panelEyebrow
-                                }
-                            >
+                            <span className={styles.panelEyebrow}>
                                 YOUR NETWORK
                             </span>
 
                             <h1>Messages</h1>
                         </div>
 
-                        <span
-                            className={
-                                styles.messageCount
-                            }
-                        >
-                            {String(
-                                conversations.length
-                            ).padStart(2, "0")}
+                        <span className={styles.messageCount}>
+                            {String(conversations.length).padStart(2, "0")}
                         </span>
                     </div>
 
-                    <div
-                        className={styles.searchBox}
-                    >
+                    <div className={styles.searchBox}>
                         <span>⌕</span>
 
                         <input
                             type="text"
                             value={search}
                             onChange={(event) =>
-                                setSearch(
-                                    event.target.value
-                                )
+                                setSearch(event.target.value)
                             }
                             placeholder="SEARCH CONVERSATIONS"
                         />
                     </div>
 
-                    <div
-                        className={
-                            styles.conversationList
-                        }
-                    >
+                    <div className={styles.conversationList}>
                         {loading ? (
-                            <div
-                                className={
-                                    styles.listEmpty
-                                }
-                            >
+                            <div className={styles.listEmpty}>
                                 <span>...</span>
-
-                                <p>
-                                    Loading
-                                    conversations...
-                                </p>
+                                <p>Loading conversations...</p>
                             </div>
                         ) : error ? (
-                            <div
-                                className={
-                                    styles.listEmpty
-                                }
-                            >
+                            <div className={styles.listEmpty}>
                                 <span>!</span>
-
                                 <p>{error}</p>
                             </div>
-                        ) : filteredConversations.length ===
-                            0 ? (
-                            <div
-                                className={
-                                    styles.listEmpty
-                                }
-                            >
+                        ) : filteredConversations.length === 0 ? (
+                            <div className={styles.listEmpty}>
                                 <span>—</span>
 
                                 <p>
@@ -618,113 +563,79 @@ const Messages = () => {
                                 </p>
                             </div>
                         ) : (
-                            filteredConversations.map(
-                                (conversation) => {
-                                    const person =
-                                        getOtherParticipant(
-                                            conversation
-                                        );
+                            filteredConversations.map((conversation) => {
+                                const person =
+                                    getOtherParticipant(conversation);
 
-                                    const isSelected =
-                                        selectedConversation?._id ===
-                                        conversation._id;
+                                const isSelected =
+                                    selectedConversation?._id ===
+                                    conversation._id;
 
-                                    const initial =
-                                        person?.name
-                                            ?.charAt(
-                                                0
-                                            )
-                                            ?.toUpperCase() ||
-                                        "?";
+                                const initial =
+                                    person?.name
+                                        ?.charAt(0)
+                                        ?.toUpperCase() || "?";
 
-                                    return (
-                                        <button
-                                            key={
-                                                conversation._id
-                                            }
-                                            type="button"
-                                            className={`${styles.conversationItem} ${isSelected
+                                return (
+                                    <button
+                                        key={conversation._id}
+                                        type="button"
+                                        className={`${styles.conversationItem} ${
+                                            isSelected
                                                 ? styles.activeConversation
                                                 : ""
-                                                }`}
-                                            onClick={() =>
-                                                handleConversationSelect(
-                                                    conversation
-                                                )
+                                        }`}
+                                        onClick={() =>
+                                            handleConversationSelect(
+                                                conversation
+                                            )
+                                        }
+                                    >
+                                        <div className={styles.avatar}>
+                                            {initial}
+                                        </div>
+
+                                        <div
+                                            className={
+                                                styles.conversationInfo
                                             }
                                         >
                                             <div
                                                 className={
-                                                    styles.avatar
+                                                    styles.conversationTop
                                                 }
                                             >
-                                                {
-                                                    initial
-                                                }
+                                                <h2>{person?.name}</h2>
+
+                                                <span>
+                                                    {formatTime(
+                                                        conversation.lastMessageAt
+                                                    )}
+                                                </span>
                                             </div>
 
-                                            <div
-                                                className={
-                                                    styles.conversationInfo
-                                                }
-                                            >
-                                                <div
-                                                    className={
-                                                        styles.conversationTop
-                                                    }
-                                                >
-                                                    <h2>
-                                                        {
-                                                            person?.name
-                                                        }
-                                                    </h2>
-
-                                                    <span>
-                                                        {formatTime(
-                                                            conversation.lastMessageAt
-                                                        )}
-                                                    </span>
-                                                </div>
-
-                                                <p>
-                                                    {conversation.lastMessage ||
-                                                        "Start a conversation..."}
-                                                </p>
-                                            </div>
-                                        </button>
-                                    );
-                                }
-                            )
+                                            <p>
+                                                {conversation.lastMessage ||
+                                                    "Start a conversation..."}
+                                            </p>
+                                        </div>
+                                    </button>
+                                );
+                            })
                         )}
                     </div>
                 </aside>
 
-                {/* =================================================
-                    CHAT PANEL
-                ================================================= */}
+                {/* CHAT PANEL */}
 
-                <section
-                    className={styles.chatPanel}
-                >
+                <section className={styles.chatPanel}>
                     {!selectedConversation ? (
-                        <div
-                            className={
-                                styles.chatEmpty
-                            }
-                        >
-                            <div
-                                className={
-                                    styles.emptyNumber
-                                }
-                            >
+                        <div className={styles.chatEmpty}>
+                            <div className={styles.emptyNumber}>
                                 01
                             </div>
 
-                            <span
-                                className={
-                                    styles.chatEyebrow
-                                }
-                            >
+                            <span className={styles.chatEyebrow}>
                                 DIRECT CONNECTION
                             </span>
 
@@ -735,150 +646,82 @@ const Messages = () => {
                             </h2>
 
                             <p>
-                                Choose someone from
-                                your network to
-                                continue the
-                                conversation.
+                                Choose someone from your network to
+                                continue the conversation.
                             </p>
                         </div>
                     ) : (
-                        <div
-                            className={
-                                styles.chatPlaceholder
-                            }
-                        >
-                            <div
-                                className={
-                                    styles.chatHeader
-                                }
-                            >
+                        <div className={styles.chatPlaceholder}>
+                            <div className={styles.chatHeader}>
                                 <div>
-                                    <span>
-                                        CONVERSATION
-                                    </span>
-
-                                    <h2>
-                                        {
-                                            selectedPerson?.name
-                                        }
-                                    </h2>
+                                    <span>CONVERSATION</span>
+                                    <h2>{selectedPerson?.name}</h2>
                                 </div>
 
-                                <span
-                                    className={
-                                        styles.onlineDot
-                                    }
-                                >
+                                <span className={styles.onlineDot}>
                                     ●
                                 </span>
                             </div>
 
-                            <div
-                                className={
-                                    styles.messageArea
-                                }
-                            >
+                            <div className={styles.messageArea}>
                                 {messagesLoading ? (
-                                    <div
-                                        className={
-                                            styles.listEmpty
-                                        }
-                                    >
+                                    <div className={styles.listEmpty}>
                                         <span>...</span>
-                                        <p>
-                                            Loading
-                                            messages...
-                                        </p>
+                                        <p>Loading messages...</p>
                                     </div>
                                 ) : messagesError ? (
-                                    <div
-                                        className={
-                                            styles.listEmpty
-                                        }
-                                    >
+                                    <div className={styles.listEmpty}>
                                         <span>!</span>
-                                        <p>
-                                            {messagesError}
-                                        </p>
+                                        <p>{messagesError}</p>
                                     </div>
-                                ) : messages.length ===
-                                    0 ? (
-                                    <div
-                                        className={
-                                            styles.listEmpty
-                                        }
-                                    >
+                                ) : messages.length === 0 ? (
+                                    <div className={styles.listEmpty}>
                                         <span>—</span>
 
                                         <p>
-                                            No messages yet.
-                                            Start the
+                                            No messages yet. Start the
                                             conversation.
                                         </p>
                                     </div>
                                 ) : (
-                                    <div
-                                        className={
-                                            styles.messagesStack
-                                        }
-                                    >
-                                        {messages.map(
-                                            (
-                                                message
-                                            ) => {
-                                                const senderId =
-                                                    typeof message.sender ===
-                                                        "object"
-                                                        ? message
-                                                            .sender
-                                                            ?._id
-                                                        : message.sender;
+                                    <div className={styles.messagesStack}>
+                                        {messages.map((message) => {
+                                            const senderId =
+                                                typeof message.sender ===
+                                                "object"
+                                                    ? message.sender?._id
+                                                    : message.sender;
 
-                                                const isMine =
-                                                    String(
-                                                        senderId
-                                                    ) ===
-                                                    String(
-                                                        currentUserId
-                                                    );
+                                            const isMine =
+                                                String(senderId) ===
+                                                String(currentUserId);
 
-                                                return (
+                                            return (
+                                                <div
+                                                    key={message._id}
+                                                    className={
+                                                        isMine
+                                                            ? styles.myMessage
+                                                            : styles.theirMessage
+                                                    }
+                                                >
                                                     <div
-                                                        key={
-                                                            message._id
-                                                        }
                                                         className={
-                                                            isMine
-                                                                ? styles.myMessage
-                                                                : styles.theirMessage
+                                                            styles.messageBubble
                                                         }
                                                     >
-                                                        <div
-                                                            className={
-                                                                styles.messageBubble
-                                                            }
-                                                        >
-                                                            {
-                                                                message.text
-                                                            }
-                                                        </div>
+                                                        {message.text}
                                                     </div>
-                                                );
-                                            }
-                                        )}
+                                                </div>
+                                            );
+                                        })}
                                     </div>
                                 )}
                             </div>
 
-                            {/* =================================================
-                                MESSAGE COMPOSER
-                            ================================================= */}
+                            {/* MESSAGE COMPOSER */}
 
-                            <div
-                                className={
-                                    styles.messageComposer
-                                }
-                            >
+                            <div className={styles.messageComposer}>
                                 <input
                                     type="text"
                                     placeholder="WRITE A MESSAGE..."
@@ -888,26 +731,17 @@ const Messages = () => {
                                             event.target.value
                                         )
                                     }
-                                    onKeyDown={(
-                                        event
-                                    ) => {
-                                        if (
-                                            event.key ===
-                                            "Enter"
-                                        ) {
+                                    onKeyDown={(event) => {
+                                        if (event.key === "Enter") {
                                             handleSendMessage();
                                         }
                                     }}
-                                    disabled={
-                                        sendingMessage
-                                    }
+                                    disabled={sendingMessage}
                                 />
 
                                 <button
                                     type="button"
-                                    onClick={
-                                        handleSendMessage
-                                    }
+                                    onClick={handleSendMessage}
                                     disabled={
                                         sendingMessage ||
                                         !messageText.trim()
@@ -925,20 +759,11 @@ const Messages = () => {
                 </section>
             </section>
 
-            {/* =================================================
-                FOOTER
-            ================================================= */}
+            {/* FOOTER */}
 
-            <footer
-                className={styles.footer}
-            >
-                <span>
-                    INSTACARD / DIRECT MESSAGING
-                </span>
-
-                <span>
-                    CONNECT · CREATE · COLLABORATE
-                </span>
+            <footer className={styles.footer}>
+                <span>INSTACARD / DIRECT MESSAGING</span>
+                <span>CONNECT · CREATE · COLLABORATE</span>
             </footer>
         </main>
     );
