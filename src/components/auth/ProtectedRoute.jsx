@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
+import API_BASE_URL from "../../config/api";
 
 const ProtectedRoute = ({ children }) => {
   const [checkingAuth, setCheckingAuth] = useState(true);
@@ -17,7 +18,7 @@ const ProtectedRoute = ({ children }) => {
 
       try {
         const response = await fetch(
-          "http://localhost:5000/api/auth/me",
+          `${API_BASE_URL}/api/auth/me`,
           {
             method: "GET",
             headers: {

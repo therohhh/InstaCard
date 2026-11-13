@@ -4,6 +4,7 @@ import html2canvas from "html2canvas";
 
 import styles from "./Profile.module.css";
 import InstaCard from "../../components/card/InstaCard";
+import API_BASE_URL from "../../config/api";
 
 const Profile = () => {
     const { id } = useParams();
@@ -52,7 +53,7 @@ const Profile = () => {
             }
 
             const response = await fetch(
-                `http://localhost:5000/api/conversations/${targetUserId}`,
+                `${API_BASE_URL}/api/conversations/start/${targetUserId}`,
                 {
                     method: "POST",
                     headers: {
@@ -98,7 +99,7 @@ const Profile = () => {
                 const [profileResponse, meResponse] =
                     await Promise.all([
                         fetch(
-                            `http://localhost:5000/api/cards/${id}`,
+                            `${API_BASE_URL}/api/cards/${id}`,
                             {
                                 headers: {
                                     Authorization: `Bearer ${token}`,
@@ -106,7 +107,7 @@ const Profile = () => {
                             }
                         ),
                         fetch(
-                            "http://localhost:5000/api/auth/me",
+                            `${API_BASE_URL}/api/auth/me`,
                             {
                                 headers: {
                                     Authorization: `Bearer ${token}`,

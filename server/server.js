@@ -1,7 +1,8 @@
+
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
-import { env } from "node:process";
+import process from "node:process";
 
 import connectDB from "./config/db.js";
 import authRoutes from "./routes/authRoutes.js";
@@ -18,9 +19,22 @@ const app = express();
    MIDDLEWARE
 ========================================================= */
 
+const allowedOrigins = [
+    "http://localhost:5173",
+    process.env.CLIENT_URL,
+].filter(Boolean);
+
 app.use(
     cors({
-        origin: "http://localhost:5173",
+        origin: (origin, callback) => {
+            // Allow requests without an Origin header,
+            // such as command-line tools and server-to-server requests.
+            if (!origin || allowedOrigins.includes(origin)) {
+                return callback(null, true);
+            }
+
+            return callback(new Error("Origin not allowed by CORS"));
+        },
         methods: [
             "GET",
             "POST",
@@ -38,7 +52,7 @@ app.use(
 
 app.use(
     express.json({
-        limit: "25mb",
+        limit: "2mb",
     })
 );
 
@@ -46,30 +60,21 @@ app.use(
    DATABASE
 ========================================================= */
 
-connectDB();
+app.get("/", (req, res) => {
+    res.status(200).json({
+        message: "InstaCard API is running",
+    });
+});
 
 /* =========================================================
    ROUTES
 ========================================================= */
 
 app.use("/api/auth", authRoutes);
-
 app.use("/api/cards", cardRoutes);
-
 app.use("/api/upload", uploadRoutes);
-
 app.use("/api/conversations", conversationRoutes);
-
 app.use("/api/messages", messageRoutes);
-/* =========================================================
-   TEST ROUTE
-========================================================= */
-
-app.get("/", (req, res) => {
-    res.status(200).json({
-        message: "InstaCard API is running",
-    });
-});
 
 /* =========================================================
    404 HANDLER
@@ -86,14 +91,11 @@ app.use((req, res) => {
 ========================================================= */
 
 app.use((err, req, res, next) => {
-    void next;
-    console.error("Server error:", err);
+    if (res.headersSent) {
+        return next(err);
+    }
 
-    if (
-        err instanceof SyntaxError &&
-        err.status === 400 &&
-        "body" in err
-    ) {
+    if (err instanceof SyntaxError && err.status === 400 && "body" in err) {
         return res.status(400).json({
             message: "Invalid JSON payload",
         });
@@ -105,19 +107,36 @@ app.use((err, req, res, next) => {
         });
     }
 
-    res.status(500).json({
+    if (err.message === "Origin not allowed by CORS") {
+        return res.status(403).json({
+            message: "Origin not allowed",
+        });
+    }
+
+    console.error("Server error:", err);
+
+    return res.status(500).json({
         message: "Server error",
     });
 });
 
 /* =========================================================
-   SERVER
+   SERVER STARTUP
 ========================================================= */
 
-const PORT = env.PORT || 5000;
+const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, () => {
-    console.log(
-        `Server running on port ${PORT}`
-    );
-});
+const startServer = async () => {
+    try {
+        await connectDB();
+
+        app.listen(PORT, () => {
+            console.log(`InstaCard API running on port ${PORT}`);
+        });
+    } catch (error) {
+        console.error("Failed to start server:", error.message);
+        process.exit(1);
+    }
+};
+
+startServer();

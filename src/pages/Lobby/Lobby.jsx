@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import styles from "./Lobby.module.css";
 import InstaCard from "../../components/card/InstaCard";
+import API_BASE_URL from "../../config/api";
 
 const Lobby = () => {
     const navigate = useNavigate();
@@ -32,8 +33,8 @@ const Lobby = () => {
                 Authorization: `Bearer ${token}`,
             };
             const [myCardResponse, cardsResponse] = await Promise.all([
-                fetch("http://localhost:5000/api/cards/me", { headers }),
-                fetch("http://localhost:5000/api/cards", { headers }),
+                fetch(`${API_BASE_URL}/api/cards/me`, { headers }),
+                fetch(`${API_BASE_URL}/api/cards`, { headers }),
             ]);
             const myCardData = await myCardResponse.json();
             const cardsData = await cardsResponse.json();
@@ -80,7 +81,7 @@ const Lobby = () => {
                 const token = localStorage.getItem("token");
                 if (!token) return;
                 const response = await fetch(
-                    "http://localhost:5000/api/messages/unread-count",
+                    `${API_BASE_URL}/api/messages/unread-count`,
                     {
                         headers: {
                             Authorization: `Bearer ${token}`,
@@ -221,7 +222,7 @@ const Lobby = () => {
                 return;
             }
             const response = await fetch(
-                `http://localhost:5000/api/conversations/${targetUserId}`,
+                `${API_BASE_URL}/api/conversations/start/${targetUserId}`,
                 {
                     method: "POST",
                     headers: {

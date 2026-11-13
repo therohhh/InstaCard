@@ -5,6 +5,7 @@ import {
 } from "react-router-dom";
 import html2canvas from "html2canvas";
 import styles from "./Builder.module.css";
+import API_BASE_URL from "../../config/api";
 
 const fallbackAvatar = {
     color: "#1f2937",
@@ -114,7 +115,7 @@ const Builder = () => {
                 setError("");
 
                 const response = await fetch(
-                    "http://localhost:5000/api/cards/me",
+                    `${API_BASE_URL}/api/cards/me`,
                     {
                         headers: {
                             Authorization: `Bearer ${token}`,
@@ -134,7 +135,7 @@ const Builder = () => {
                 if (!response.ok) {
                     throw new Error(
                         data.message ||
-                            "Unable to load your card."
+                        "Unable to load your card."
                     );
                 }
 
@@ -164,7 +165,7 @@ const Builder = () => {
 
                 if (
                     existingCard.avatar?.type ===
-                        "image" &&
+                    "image" &&
                     existingCard.avatar?.url
                 ) {
                     setAvatarImage(
@@ -176,7 +177,7 @@ const Builder = () => {
 
                 setBackgroundImage(
                     existingCard.backgroundImage ||
-                        null
+                    null
                 );
             } catch (loadError) {
                 console.error(
@@ -186,7 +187,7 @@ const Builder = () => {
 
                 setError(
                     loadError.message ||
-                        "Unable to load your card."
+                    "Unable to load your card."
                 );
             } finally {
                 setLoadingCard(false);
@@ -230,7 +231,7 @@ const Builder = () => {
         );
 
         const response = await fetch(
-            "http://localhost:5000/api/upload",
+            `${API_BASE_URL}/api/upload`,
             {
                 method: "POST",
                 headers: {
@@ -258,7 +259,7 @@ const Builder = () => {
         if (!response.ok) {
             throw new Error(
                 data.message ||
-                    "Image upload failed."
+                "Image upload failed."
             );
         }
 
@@ -352,7 +353,7 @@ const Builder = () => {
 
             setError(
                 uploadError.message ||
-                    "Image upload failed. Please try again."
+                "Image upload failed. Please try again."
             );
 
             /*
@@ -489,16 +490,16 @@ const Builder = () => {
                  */
                 avatar: avatarImage
                     ? {
-                          type: "image",
-                          url: avatarImage,
-                      }
+                        type: "image",
+                        url: avatarImage,
+                    }
                     : {
-                          type: "letter",
-                          label: card.name
-                              .charAt(0)
-                              .toUpperCase(),
-                          color: fallbackAvatar.color,
-                      },
+                        type: "letter",
+                        label: card.name
+                            .charAt(0)
+                            .toUpperCase(),
+                        color: fallbackAvatar.color,
+                    },
 
                 /*
                  * backgroundImage is now the
@@ -512,8 +513,8 @@ const Builder = () => {
 
             const response = await fetch(
                 isEditMode
-                    ? "http://localhost:5000/api/cards/me"
-                    : "http://localhost:5000/api/cards",
+                    ? `${API_BASE_URL}/api/cards/me`
+                    : `${API_BASE_URL}/api/cards`,
                 {
                     method: isEditMode
                         ? "PUT"
@@ -553,7 +554,7 @@ const Builder = () => {
             if (!response.ok) {
                 setError(
                     data.message ||
-                        "Failed to publish card."
+                    "Failed to publish card."
                 );
 
                 return;
@@ -781,8 +782,8 @@ const Builder = () => {
                                         {uploadingAvatar
                                             ? "Uploading..."
                                             : avatarImage
-                                              ? "Profile picture added"
-                                              : "Add profile picture"}
+                                                ? "Profile picture added"
+                                                : "Add profile picture"}
                                     </strong>
 
                                     <span>
@@ -809,8 +810,8 @@ const Builder = () => {
                                 {uploadingAvatar
                                     ? "Uploading..."
                                     : avatarImage
-                                      ? "Change image"
-                                      : "Upload image"}
+                                        ? "Change image"
+                                        : "Upload image"}
                             </button>
 
                             {avatarImage &&
@@ -903,8 +904,8 @@ const Builder = () => {
                                     {uploadingBackground
                                         ? "Uploading background..."
                                         : backgroundImage
-                                          ? "Change background image"
-                                          : "Add a custom background"}
+                                            ? "Change background image"
+                                            : "Add a custom background"}
                                 </span>
 
                                 <span
@@ -1143,43 +1144,43 @@ const Builder = () => {
 
                             {card.skills.length >
                                 0 && (
-                                <div
-                                    className={
-                                        styles.skillList
-                                    }
-                                >
-                                    {card.skills.map(
-                                        (skill) => (
-                                            <div
-                                                className={
-                                                    styles.skillTag
-                                                }
-                                                key={
-                                                    skill
-                                                }
-                                            >
-                                                <span>
-                                                    {
+                                    <div
+                                        className={
+                                            styles.skillList
+                                        }
+                                    >
+                                        {card.skills.map(
+                                            (skill) => (
+                                                <div
+                                                    className={
+                                                        styles.skillTag
+                                                    }
+                                                    key={
                                                         skill
                                                     }
-                                                </span>
-
-                                                <button
-                                                    type="button"
-                                                    onClick={() =>
-                                                        removeSkill(
-                                                            skill
-                                                        )
-                                                    }
-                                                    aria-label={`Remove ${skill}`}
                                                 >
-                                                    ×
-                                                </button>
-                                            </div>
-                                        )
-                                    )}
-                                </div>
-                            )}
+                                                    <span>
+                                                        {
+                                                            skill
+                                                        }
+                                                    </span>
+
+                                                    <button
+                                                        type="button"
+                                                        onClick={() =>
+                                                            removeSkill(
+                                                                skill
+                                                            )
+                                                        }
+                                                        aria-label={`Remove ${skill}`}
+                                                    >
+                                                        ×
+                                                    </button>
+                                                </div>
+                                            )
+                                        )}
+                                    </div>
+                                )}
                         </div>
 
                         {/* =================================================
@@ -1360,8 +1361,8 @@ const Builder = () => {
                             style={
                                 backgroundImage
                                     ? {
-                                          backgroundImage: `url(${backgroundImage})`,
-                                      }
+                                        backgroundImage: `url(${backgroundImage})`,
+                                    }
                                     : undefined
                             }
                         >
@@ -1406,10 +1407,10 @@ const Builder = () => {
                                         >
                                             {card.name
                                                 ? card.name
-                                                      .charAt(
-                                                          0
-                                                      )
-                                                      .toUpperCase()
+                                                    .charAt(
+                                                        0
+                                                    )
+                                                    .toUpperCase()
                                                 : "R"}
                                         </span>
                                     )}
@@ -1618,22 +1619,22 @@ const Builder = () => {
                         >
                             <span>
                                 {saving ||
-                                uploadingAvatar ||
-                                uploadingBackground
+                                    uploadingAvatar ||
+                                    uploadingBackground
                                     ? "◌"
                                     : "↗"}
                             </span>
 
                             {uploadingAvatar ||
-                            uploadingBackground
+                                uploadingBackground
                                 ? "Uploading..."
                                 : saving
-                                  ? isEditMode
-                                      ? "Updating..."
-                                      : "Publishing..."
-                                  : isEditMode
-                                    ? "Update Card"
-                                    : "Publish to Lobby"}
+                                    ? isEditMode
+                                        ? "Updating..."
+                                        : "Publishing..."
+                                    : isEditMode
+                                        ? "Update Card"
+                                        : "Publish to Lobby"}
                         </button>
                     </div>
                 </section>

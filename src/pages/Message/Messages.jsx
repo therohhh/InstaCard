@@ -9,6 +9,7 @@ import {
 } from "react-router-dom";
 
 import styles from "./Messages.module.css";
+import API_BASE_URL from "../../config/api";
 
 const Messages = () => {
     const navigate = useNavigate();
@@ -59,7 +60,7 @@ const Messages = () => {
                 }
 
                 const response = await fetch(
-                    "http://localhost:5000/api/conversations",
+                    `${API_BASE_URL}/api/conversations`,
                     {
                         headers: {
                             Authorization: `Bearer ${token}`,
@@ -126,7 +127,7 @@ const Messages = () => {
 
         try {
             const response = await fetch(
-                `http://localhost:5000/api/messages/${conversationId}/read`,
+                `${API_BASE_URL}/api/messages/${conversationId}/read`,
                 {
                     method: "PATCH",
                     headers: {
@@ -173,7 +174,7 @@ const Messages = () => {
                 }
 
                 const response = await fetch(
-                    `http://localhost:5000/api/messages/${selectedConversation._id}`,
+                    `${API_BASE_URL}/api/messages/${selectedConversation._id}`,
                     {
                         headers: {
                             Authorization: `Bearer ${token}`,
@@ -246,7 +247,7 @@ const Messages = () => {
                 if (!token) return;
 
                 const response = await fetch(
-                    `http://localhost:5000/api/messages/${conversationId}`,
+                    `${API_BASE_URL}/api/messages/${conversationId}`,
                     {
                         headers: {
                             Authorization: `Bearer ${token}`,
@@ -393,7 +394,7 @@ const Messages = () => {
             }
 
             const response = await fetch(
-                `http://localhost:5000/api/messages/${selectedConversation._id}`,
+                `${API_BASE_URL}/api/messages/${selectedConversation._id}`,
                 {
                     method: "POST",
                     headers: {

@@ -16,7 +16,7 @@ router.get(
 );
 
 router.post(
-  "/:userId",
+  "/start/:userId",
   authMiddleware,
   findOrCreateConversation
 );
