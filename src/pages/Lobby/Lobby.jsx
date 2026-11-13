@@ -282,7 +282,7 @@ const Lobby = () => {
                         aria-label={`Open messages, ${unreadCount} unread`}
                         title="Messages"
                     >
-                        <img src="public/telegram.svg" alt="" aria-hidden="true" />
+                        <img src="/telegram.svg" alt="" aria-hidden="true" />
                         {unreadCount > 0 && (
                             <span className={styles.unreadBadge}>
                                 {unreadCount > 99 ? "99+" : unreadCount}
